@@ -9,76 +9,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
   <style>
-    :root {
-      --bg:        #0c0c10;
-      --bg-mid:    #111118;
-      --border:    rgba(255,255,255,0.07);
-      --gold:      #b89a5a;
-      --gold-pale: #d4b97a;
-      --text:      #c8c8d4;
-      --text-dim:  #6a6a7a;
-      --white:     #e8e8f0;
-    }
+    body { display: flex; flex-direction: column; min-height: 100vh; }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      font-size: 1rem;
-      line-height: 1.7;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    a { color: inherit; text-decoration: none; }
-
-    /* ── NAV ── */
-    nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 28px 60px;
-      background: linear-gradient(to bottom, rgba(12,12,16,0.95), transparent);
-    }
-
-    .nav-logo {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 300;
-      font-size: 1.15rem;
-      letter-spacing: 0.35em;
-      text-transform: uppercase;
-      color: var(--white);
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 40px;
-      list-style: none;
-      font-size: 0.7rem;
-      font-weight: 400;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-    }
-
-    .nav-links a { transition: color 0.3s; }
-    .nav-links a:hover { color: var(--gold); }
-
-    @media (max-width: 680px) {
-      nav { padding: 22px 24px; }
-      .nav-links { display: none; }
-    }
-
-    /* ── HERO ── */
     .hero {
-      min-height: 100vh;
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -111,7 +47,7 @@
     .hero-name {
       font-family: 'Cormorant Garamond', serif;
       font-weight: 300;
-      font-size: clamp(3.5rem, 10vw, 8rem);
+      font-size: clamp(3rem, 10vw, 7.5rem);
       letter-spacing: 0.15em;
       text-transform: uppercase;
       color: var(--white);
@@ -146,10 +82,6 @@
       flex-direction: column;
       align-items: center;
       gap: 8px;
-      font-size: 0.6rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--text-dim);
     }
 
     .hero-scroll-line {
@@ -157,375 +89,32 @@
       height: 40px;
       background: linear-gradient(to bottom, var(--text-dim), transparent);
     }
-
-    /* ── SECTIONS ── */
-    section {
-      padding: 120px 24px;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    .section-label {
-      font-size: 0.62rem;
-      font-weight: 500;
-      letter-spacing: 0.4em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 48px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .section-label::after {
-      content: '';
-      flex: 1;
-      max-width: 60px;
-      height: 1px;
-      background: var(--gold);
-      opacity: 0.4;
-    }
-
-    /* ── ABOUT ── */
-    .about-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 80px;
-      align-items: start;
-    }
-
-    @media (max-width: 760px) {
-      .about-grid { grid-template-columns: 1fr; gap: 40px; }
-    }
-
-    .about-heading {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 300;
-      font-size: clamp(2rem, 4vw, 3rem);
-      color: var(--white);
-      line-height: 1.25;
-    }
-
-    .about-body {
-      font-size: 0.95rem;
-      color: var(--text);
-      line-height: 1.9;
-    }
-
-    .about-body p + p { margin-top: 1.4em; }
-
-    /* ── DIVIDER ── */
-    .divider {
-      width: 100%;
-      height: 1px;
-      background: var(--border);
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    /* ── INTERESTS ── */
-    .interests-intro {
-      max-width: 560px;
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 300;
-      font-size: clamp(1.2rem, 2.5vw, 1.6rem);
-      color: var(--white);
-      line-height: 1.5;
-      margin-bottom: 80px;
-    }
-
-    .interests-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 2px;
-    }
-
-    .interest-card {
-      background: var(--bg-mid);
-      padding: 48px 36px;
-      border: 1px solid var(--border);
-      transition: border-color 0.4s, background 0.4s;
-      cursor: default;
-    }
-
-    .interest-card:hover {
-      border-color: rgba(184,154,90,0.25);
-      background: #14141c;
-    }
-
-    .interest-number {
-      font-size: 0.6rem;
-      letter-spacing: 0.3em;
-      color: var(--gold);
-      opacity: 0.7;
-      margin-bottom: 24px;
-    }
-
-    .interest-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 400;
-      font-size: 1.4rem;
-      color: var(--white);
-      margin-bottom: 16px;
-    }
-
-    .interest-body {
-      font-size: 0.82rem;
-      color: var(--text-dim);
-      line-height: 1.8;
-    }
-
-    /* ── PRINCIPLES ── */
-    .principles-section {
-      background: var(--bg-mid);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      padding: 120px 24px;
-    }
-
-    .principles-inner {
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    .principles-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 60px;
-      margin-top: 60px;
-    }
-
-    @media (max-width: 760px) {
-      .principles-grid { grid-template-columns: 1fr; gap: 40px; }
-    }
-
-    .principle-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.25rem;
-      font-weight: 400;
-      color: var(--white);
-      margin-bottom: 14px;
-    }
-
-    .principle-body {
-      font-size: 0.82rem;
-      color: var(--text-dim);
-      line-height: 1.9;
-    }
-
-    /* ── CONTACT ── */
-    .contact-section {
-      text-align: center;
-      padding: 160px 24px;
-    }
-
-    .contact-heading {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 300;
-      font-size: clamp(2rem, 5vw, 3.5rem);
-      color: var(--white);
-      margin-bottom: 24px;
-    }
-
-    .contact-sub {
-      font-size: 0.85rem;
-      color: var(--text-dim);
-      max-width: 400px;
-      margin: 0 auto 56px;
-      line-height: 1.8;
-    }
-
-    .contact-note {
-      font-size: 0.7rem;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-      border: 1px solid var(--border);
-      display: inline-block;
-      padding: 16px 32px;
-    }
-
-    /* ── FOOTER ── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 48px 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-    }
-
-    @media (max-width: 680px) {
-      footer { flex-direction: column; text-align: center; padding: 40px 24px; }
-    }
-
-    .footer-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 300;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      font-size: 0.9rem;
-      color: var(--white);
-    }
-
-    .footer-right {
-      font-size: 0.65rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-      text-align: right;
-    }
-
-    @media (max-width: 680px) {
-      .footer-right { text-align: center; }
-    }
   </style>
 </head>
 <body>
 
-  <!-- NAV -->
   <nav>
-    <span class="nav-logo">Kramlem</span>
+    <a href="index.html" class="nav-logo">Kramlem Group</a>
     <ul class="nav-links">
-      <li><a href="#about">About</a></li>
-      <li><a href="#interests">Interests</a></li>
-      <li><a href="#contact">Contact</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="interests.html">Interests</a></li>
+      <li><a href="contact.html">Contact</a></li>
     </ul>
   </nav>
 
-  <!-- HERO -->
   <div class="hero">
     <p class="hero-est">Established 1946</p>
-    <h1 class="hero-name">Kramlem</h1>
+    <h1 class="hero-name">Kramlem Group</h1>
     <div class="hero-rule"></div>
-    <p class="hero-tagline">Certain things are better measured over decades than quarters.</p>
+    <p class="hero-tagline">The work continues.</p>
     <div class="hero-scroll">
       <div class="hero-scroll-line"></div>
     </div>
   </div>
 
-  <!-- ABOUT -->
-  <section id="about">
-    <p class="section-label">About</p>
-    <div class="about-grid">
-      <div>
-        <h2 class="about-heading">A long view,<br/>held consistently.</h2>
-      </div>
-      <div class="about-body">
-        <p>
-          Founded in 1946, Kramlem has operated across a range of sectors and
-          geographies without ever feeling the need to explain itself at length.
-          What began as a single focused endeavour has evolved — as most things
-          of substance do — into something broader, quieter, and more durable.
-        </p>
-        <p>
-          We do not chase trends. We do not seek coverage. The work is its own
-          evidence. Our interests are varied; our standards are not. Every
-          engagement, investment, or relationship we enter is chosen with the
-          same care we have applied for the better part of a century.
-        </p>
-        <p>
-          Those familiar with us tend to remain so. Those who are not tend to
-          wonder. We consider both outcomes acceptable.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <div class="divider"></div>
-
-  <!-- INTERESTS -->
-  <section id="interests">
-    <p class="section-label">Areas of Interest</p>
-    <p class="interests-intro">
-      Our focus has never been confined to a single category. The common thread
-      is not sector — it is the quality of the underlying proposition.
-    </p>
-    <div class="interests-grid">
-      <div class="interest-card">
-        <p class="interest-number">01</p>
-        <h3 class="interest-title">Capital</h3>
-        <p class="interest-body">
-          Patient deployment into situations where others require speed.
-          We have the luxury, earned over time, of waiting for the right moment.
-        </p>
-      </div>
-      <div class="interest-card">
-        <p class="interest-number">02</p>
-        <h3 class="interest-title">Infrastructure</h3>
-        <p class="interest-body">
-          Long-duration interests in assets and systems that underpin
-          how things — and people — move and connect.
-        </p>
-      </div>
-      <div class="interest-card">
-        <p class="interest-number">03</p>
-        <h3 class="interest-title">Knowledge</h3>
-        <p class="interest-body">
-          Accumulated understanding in domains where depth takes years to build
-          and is therefore rarely available to the impatient.
-        </p>
-      </div>
-      <div class="interest-card">
-        <p class="interest-number">04</p>
-        <h3 class="interest-title">Advisory</h3>
-        <p class="interest-body">
-          Selective counsel for those who have already identified the question.
-          We do not generate decks. We provide perspective.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- PRINCIPLES -->
-  <div class="principles-section">
-    <div class="principles-inner">
-      <p class="section-label">How We Operate</p>
-      <div class="principles-grid">
-        <div>
-          <h3 class="principle-title">No unsolicited introductions</h3>
-          <p class="principle-body">
-            Our relationships form through established channels and trusted
-            intermediaries. We do not accept cold approaches, and we do not
-            make them.
-          </p>
-        </div>
-        <div>
-          <h3 class="principle-title">Confidentiality as standard</h3>
-          <p class="principle-body">
-            The details of our activities and those we work with are not
-            matters for public record. Discretion is the baseline, not a
-            premium offering.
-          </p>
-        </div>
-        <div>
-          <h3 class="principle-title">Continuity over velocity</h3>
-          <p class="principle-body">
-            Established in 1946, we measure ourselves in decades.
-            The organisations and individuals who suit us tend to share
-            that perspective.
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- CONTACT -->
-  <div class="contact-section" id="contact">
-    <h2 class="contact-heading">Introductions</h2>
-    <p class="contact-sub">
-      Kramlem does not maintain an open enquiries channel.
-      Relevant introductions reach us through those who already know us.
-    </p>
-    <span class="contact-note">By introduction only</span>
-  </div>
-
-  <!-- FOOTER -->
   <footer>
     <span class="footer-name">Kramlem Group</span>
-    <div class="footer-right">
-      <div>Est. 1946</div>
-    </div>
+    <div class="footer-right">Est. 1946</div>
   </footer>
 
 </body>
