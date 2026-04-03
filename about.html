@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="About Kramlem Group. Established 1946." />
+  <meta name="description" content="About Kramlem Group. Established 2000." />
   <title>About | Kramlem Group</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -33,7 +33,7 @@
     <section>
       <div class="about-grid">
         <div>
-          <h2 class="about-heading">Founded in 1946.<br/>Still here.</h2>
+          <h2 class="about-heading">Founded in 2000.<br/>Still here.</h2>
         </div>
         <div class="about-body">
           <p>
@@ -46,7 +46,7 @@
             We do not chase trends. We do not seek coverage. The work is its own
             evidence. Our interests are varied; our standards are not. Every
             engagement, investment, or relationship we enter is chosen with the
-            same care we have applied for the better part of a century.
+            same care we have applied since the beginning.
           </p>
         </div>
       </div>
@@ -67,17 +67,16 @@
           </p>
         </div>
         <div>
-          <h3 class="principle-title">Confidentiality as standard</h3>
+          <h3 class="principle-title">Discretion as default</h3>
           <p class="principle-body">
-            The details of our activities and those we work with are not
-            matters for public record. Discretion is the baseline, not a
-            premium offering.
+            We keep the details of our work and our relationships private.
+            It is simply how we prefer to operate.
           </p>
         </div>
         <div>
           <h3 class="principle-title">Continuity over velocity</h3>
           <p class="principle-body">
-            Established in 1946, we measure ourselves in decades.
+            We measure ourselves in decades, not quarters.
             The organisations and individuals who suit us tend to share
             that perspective.
           </p>
@@ -88,12 +87,16 @@
 
   <footer>
     <span class="footer-name">Kramlem Group</span>
-    <div class="footer-right">Est. 1946</div>
+    <div class="footer-right">Est. 2000</div>
   </footer>
 
   <script>
+    const nav = document.querySelector('nav');
     const toggle = document.getElementById('nav-toggle');
     const links = document.getElementById('nav-links');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 10);
+    }, { passive: true });
     toggle.addEventListener('click', () => {
       toggle.classList.toggle('open');
       links.classList.toggle('open');

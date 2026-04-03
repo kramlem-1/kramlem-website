@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Areas of interest. Kramlem Group. Established 1946." />
+  <meta name="description" content="Areas of interest. Kramlem Group. Established 2000." />
   <title>Interests | Kramlem Group</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -41,7 +41,7 @@
           <h3 class="interest-title">Capital</h3>
           <p class="interest-body">
             Patient deployment into situations where others require speed.
-            We have the luxury, earned over time, of waiting for the right moment.
+            We have built the discipline, over time, of waiting for the right moment.
           </p>
         </div>
         <div class="interest-card">
@@ -74,12 +74,16 @@
 
   <footer>
     <span class="footer-name">Kramlem Group</span>
-    <div class="footer-right">Est. 1946</div>
+    <div class="footer-right">Est. 2000</div>
   </footer>
 
   <script>
+    const nav = document.querySelector('nav');
     const toggle = document.getElementById('nav-toggle');
     const links = document.getElementById('nav-links');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 10);
+    }, { passive: true });
     toggle.addEventListener('click', () => {
       toggle.classList.toggle('open');
       links.classList.toggle('open');

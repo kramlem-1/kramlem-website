@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Kramlem Group. Established 1946." />
+  <meta name="description" content="Kramlem Group. Established 2000." />
   <meta name="robots" content="index, follow" />
   <title>Kramlem Group</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -106,7 +106,7 @@
   </nav>
 
   <div class="hero">
-    <p class="hero-est">Established 1946</p>
+    <p class="hero-est">Established 2000</p>
     <h1 class="hero-name">Kramlem Group</h1>
     <div class="hero-rule"></div>
     <p class="hero-tagline">The work continues.</p>
@@ -117,12 +117,16 @@
 
   <footer>
     <span class="footer-name">Kramlem Group</span>
-    <div class="footer-right">Est. 1946</div>
+    <div class="footer-right">Est. 2000</div>
   </footer>
 
   <script>
+    const nav = document.querySelector('nav');
     const toggle = document.getElementById('nav-toggle');
     const links = document.getElementById('nav-links');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 10);
+    }, { passive: true });
     toggle.addEventListener('click', () => {
       toggle.classList.toggle('open');
       links.classList.toggle('open');
