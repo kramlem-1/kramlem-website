@@ -88,31 +88,26 @@ nav {
 
 @media (max-width: 680px) {
   nav {
-    padding: 22px 24px;
-    background: rgba(12,12,16,0.97);
+    padding: 20px 24px;
+    background: rgba(12,12,16,0.98);
+    flex-wrap: wrap;
+    align-items: center;
   }
   .nav-toggle { display: flex; }
   .nav-links {
-    display: flex;
+    display: none;
+    width: 100%;
     flex-direction: column;
-    position: fixed;
-    top: 70px;
-    left: 0; right: 0;
-    background: rgba(12,12,16,0.98);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 24px 24px;
     gap: 0;
-    transform: translateY(-110%);
-    transition: transform 0.3s ease;
-    pointer-events: none;
+    padding: 8px 0 4px;
   }
-  .nav-links.open {
-    transform: translateY(0);
-    pointer-events: all;
+  .nav-links.open { display: flex; }
+  .nav-links li {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
   }
-  .nav-links li { padding: 14px 0; border-bottom: 1px solid var(--border); }
   .nav-links li:last-child { border-bottom: none; }
-  .nav-links a { font-size: 0.85rem; }
+  .nav-links a { font-size: 0.9rem; color: var(--text); }
 }
 
 /* SECTIONS */
