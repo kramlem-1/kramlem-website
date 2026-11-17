@@ -41,7 +41,7 @@ function fetchCalendar(url) {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
 
   // Build blocklist from ICAL_EXCLUDE env var (comma-separated keywords)
   const excludeTerms = (process.env.ICAL_EXCLUDE || '')
