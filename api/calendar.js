@@ -132,5 +132,26 @@ module.exports = async (req, res) => {
 
   events.sort((a, b) => new Date(a.start) - new Date(b.start));
 
+  // ?debug=1 — returns raw parsed fields for the first 5 events (remove before sharing publicly)
+  if (req.query.debug === '1') {
+    const raw = [];
+    for (const { data } of results) {
+      for (const ev of Object.values(data)) {
+        if (ev.type !== 'VEVENT') continue;
+        raw.push({
+          summary:  ev.summary,
+          start:    ev.start,
+          attendee: ev.attendee,
+          organizer: ev.organizer,
+          categories: ev.categories,
+          description: (ev.description || '').slice(0, 200),
+        });
+        if (raw.length >= 10) break;
+      }
+      if (raw.length >= 10) break;
+    }
+    return res.status(200).json({ debug: true, raw });
+  }
+
   res.status(200).json({ events, updated: now.toISOString() });
 };
