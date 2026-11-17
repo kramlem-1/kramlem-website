@@ -704,16 +704,19 @@ async function showNextPhoto() {
   });
 }
 
+const STATIC_PHOTOS = [
+  '/dashboard/photos/family-caribbean.jpg',
+];
+
 async function fetchPhotos() {
   try {
     const res  = await fetch('/api/photos');
-    if (!res.ok) return;
+    if (!res.ok) throw new Error('api error');
     const data = await res.json();
-    if (data.photos && data.photos.length) {
-      _photos = shuffle(data.photos);
-      _photoIdx = -1;
-      showNextPhoto(); // show first photo immediately
-    }
+    const list = (data.photos && data.photos.length) ? data.photos : STATIC_PHOTOS;
+    _photos = shuffle(list);
+    _photoIdx = -1;
+    showNextPhoto(); // show first photo immediately
   } catch { /* no photos — dark background stays */ }
 }
 
