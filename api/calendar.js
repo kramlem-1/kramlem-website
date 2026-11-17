@@ -19,6 +19,11 @@ const ical = require('node-ical');
  *
  * Optional keyword blocklist (comma-separated, case-insensitive):
  *   ICAL_EXCLUDE=standup,1:1,interview,dentist
+ *
+ * Optional attendee-domain filter (recommended):
+ *   FAMILY_DOMAIN=kramlem.com
+ *   Events with any attendee outside this domain are excluded.
+ *   Events with no attendees are always kept.
  */
 
 const DAYS_AHEAD = 14;
@@ -47,6 +52,24 @@ module.exports = async (req, res) => {
     if (!excludeTerms.length) return false;
     const lower = (summary || '').toLowerCase();
     return excludeTerms.some(term => lower.includes(term));
+  }
+
+  // Filter events that have an attendee outside the family domain.
+  // Events with no attendees are kept (personal reminders, all-day markers, etc.)
+  const familyDomain = (process.env.FAMILY_DOMAIN || '').toLowerCase().trim();
+
+  function hasExternalAttendee(ev) {
+    if (!familyDomain) return false; // env var not set → no filtering
+    const raw = ev.attendee;
+    if (!raw) return false; // no attendees → keep
+    const list = Array.isArray(raw) ? raw : [raw];
+    return list.some(a => {
+      // node-ical returns attendee objects with a .val like "mailto:user@example.com"
+      const mailto = (typeof a === 'string' ? a : (a.val || '')).toLowerCase();
+      const match  = mailto.match(/mailto:([^@]+@([^;>\s]+))/);
+      if (!match) return false;
+      return match[2] !== familyDomain;
+    });
   }
 
   const sources = [
@@ -88,6 +111,7 @@ module.exports = async (req, res) => {
       if (!start || isNaN(start)) continue;
       if (start < now || start > cutoff) continue;
       if (isExcluded(ev.summary)) continue;
+      if (hasExternalAttendee(ev)) continue;
 
       // Deduplicate events that appear on multiple family calendars
       const key = (ev.summary || '') + '|' + start.toISOString().slice(0, 16);
