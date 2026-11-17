@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kramlem Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    /*
+     * Layout : hero clock (top 40%) + two-panel info row (bottom 60%)
+     * Color  : deep navy-black bg, cool-white text, amber warm, teal cool
+     * Type   : Space Grotesk (clock / headings) · Inter (body / data)
+     * Theme  : dark-only — deliberate choice for TV viewing
+     */
+    :root {
+      color-scheme: dark;
+      --bg:      #090910;
+      --surface: #0f0f1b;
+      --border:  #1c1c30;
+      --text:    #e8e8f4;
+      --dim:     #5a5a88;
+      --accent:  #7c9eff;
+      --warm:    #ffb347;
+      --teal:    #4ecdc4;
+      --font-d:  'Space Grotesk', system-ui, sans-serif;
+      --font-b:  'Inter', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-b);
+      cursor: none;
+    }
+
+    .app {
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      grid-template-rows: 2fr 3fr;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid var(--border);
+      gap: 0.6vh;
+    }
+
+    .date-line {
+      font-family: var(--font-b);
+      font-size: 2vh;
+      font-weight: 400;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .clock {
+      font-family: var(--font-d);
+      font-size: 21vh;
+      font-weight: 300;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .clock .sec {
+      font-size: 0.42em;
+      color: var(--dim);
+      vertical-align: 0.18em;
+    }
+
+    /* ── PANELS ── */
+    .panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .panel {
+      padding: 3vh 4vw;
+      border-right: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .panel:last-child { border-right: none; }
+
+    .label {
+      font-size: 1.2vh;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 2.2vh;
+    }
+
+    /* ── WEATHER ── */
+    .wx-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 2.5vw;
+      margin-bottom: 2.5vh;
+    }
+
+    .wx-icon  { font-size: 7vh; line-height: 1; flex-shrink: 0; }
+
+    .wx-temp {
+      font-family: var(--font-d);
+      font-size: 9.5vh;
+      font-weight: 300;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .wx-temp sup { font-size: 0.38em; color: var(--dim); vertical-align: 0.55em; }
+
+    .wx-desc { font-size: 2vh; color: var(--dim); margin-top: 0.4vh; }
+
+    .wx-stats {
+      display: flex;
+      gap: 2.8vw;
+      padding-top: 2.2vh;
+      border-top: 1px solid var(--border);
+    }
+
+    .stat { display: flex; flex-direction: column; gap: 0.3vh; }
+    .stat-l { font-size: 1.1vh; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+    .stat-v { font-family: var(--font-d); font-size: 2.5vh; font-variant-numeric: tabular-nums; }
+
+    .forecast {
+      display: flex;
+      gap: 1.5vw;
+      margin-top: 2.5vh;
+      padding-top: 2.2vh;
+      border-top: 1px solid var(--border);
+    }
+
+    .fc-day {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5vh;
+    }
+    .fc-name  { font-size: 1.1vh; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+    .fc-icon  { font-size: 2.6vh; }
+    .fc-temps { font-size: 1.7vh; font-variant-numeric: tabular-nums; }
+    .fc-hi    { color: var(--warm); }
+    .fc-sep   { color: var(--border); }
+    .fc-lo    { color: var(--dim); }
+
+    /* ── FAMILY ── */
+    .greeting {
+      font-family: var(--font-d);
+      font-size: 4.2vh;
+      font-weight: 300;
+      line-height: 1.25;
+      margin-bottom: 3vh;
+    }
+    .greeting .accent { color: var(--accent); }
+
+    .day-pill {
+      display: inline-block;
+      padding: 0.35vh 1.1vh;
+      border-radius: 100px;
+      font-size: 1.3vh;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      vertical-align: 0.3em;
+      margin-left: 0.6vw;
+    }
+    .day-pill.school  { background: rgba(78,205,196,.12); color: var(--teal);   border: 1px solid rgba(78,205,196,.25); }
+    .day-pill.weekend { background: rgba(124,158,255,.12); color: var(--accent); border: 1px solid rgba(124,158,255,.25); }
+    .day-pill.holiday { background: rgba(255,179,71,.12);  color: var(--warm);  border: 1px solid rgba(255,179,71,.25); }
+
+    .events { display: flex; flex-direction: column; gap: 2.2vh; }
+
+    .event { display: flex; align-items: center; gap: 2vw; }
+
+    .event-box {
+      width: 7.5vh; height: 7.5vh;
+      border-radius: 1.2vh;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      flex-shrink: 0;
+      gap: 0.1vh;
+    }
+    .event-n  { font-family: var(--font-d); font-size: 2.8vh; font-weight: 400; font-variant-numeric: tabular-nums; line-height: 1; }
+    .event-nl { font-size: 1vh; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+
+    .event-name { font-size: 2.4vh; font-weight: 400; }
+    .event-date { font-size: 1.5vh; color: var(--dim); margin-top: 0.2vh; }
+
+    /* ── STATUS ── */
+    #status {
+      position: fixed;
+      bottom: 1.5vh;
+      right: 2vw;
+      font-size: 1.1vh;
+      color: var(--border);
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="hero">
+    <div class="date-line" id="date-line">MONDAY, 17 NOVEMBER 2026</div>
+    <div class="clock">
+      <span id="hhmm">10:34</span><span class="sec" id="ss">:52</span>
+    </div>
+  </div>
+
+  <div class="panels">
+
+    <!-- Weather -->
+    <div class="panel">
+      <div class="label" id="wx-label">Weather — Sydney</div>
+      <div class="wx-row">
+        <div class="wx-icon" id="wx-icon">⛅</div>
+        <div>
+          <div class="wx-temp"><span id="wx-temp">—</span><sup>°C</sup></div>
+          <div class="wx-desc" id="wx-desc">Loading…</div>
+        </div>
+      </div>
+      <div class="wx-stats">
+        <div class="stat">
+          <span class="stat-l">Feels like</span>
+          <span class="stat-v" id="wx-feels">—°</span>
+        </div>
+        <div class="stat">
+          <span class="stat-l">High</span>
+          <span class="stat-v" id="wx-high" style="color:var(--warm)">—°</span>
+        </div>
+        <div class="stat">
+          <span class="stat-l">Low</span>
+          <span class="stat-v" id="wx-low">—°</span>
+        </div>
+        <div class="stat">
+          <span class="stat-l">Humidity</span>
+          <span class="stat-v" id="wx-hum">—%</span>
+        </div>
+        <div class="stat">
+          <span class="stat-l">Sunrise</span>
+          <span class="stat-v" id="wx-rise" style="color:var(--warm)">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-l">Sunset</span>
+          <span class="stat-v" id="wx-set">—</span>
+        </div>
+      </div>
+      <div class="forecast" id="forecast"></div>
+    </div>
+
+    <!-- Family -->
+    <div class="panel">
+      <div class="label">Today</div>
+      <div class="greeting">
+        Good <span id="greeting">morning</span>,
+        <span class="accent" id="family-name">Kramlems</span><span class="day-pill" id="day-pill"></span>
+      </div>
+      <div class="events" id="events"></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="status">—</div>
+
+<script>
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *  CONFIG — edit to customise
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const C = {
+  city:       'Sydney',
+  familyName: 'Kramlems',
+
+  /* Upcoming events: { name, date: 'YYYY-MM-DD', emoji } */
+  events: [
+    { name: "Christmas",       date: "2026-12-25", emoji: "🎄" },
+    { name: "New Year's Eve",  date: "2026-12-31", emoji: "🎆" },
+    { name: "Australia Day",   date: "2027-01-26", emoji: "🇦🇺" },
+  ],
+
+  /* School days (0=Sun … 6=Sat) */
+  schoolDays: [1,2,3,4,5],
+
+  weatherRefreshMins: 30,
+  pageRefreshMins:    15,
+};
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *  CLOCK
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function tick() {
+  const now = new Date();
+
+  document.getElementById('hhmm').textContent =
+    now.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit', hour12:false });
+  document.getElementById('ss').textContent =
+    ':' + String(now.getSeconds()).padStart(2,'0');
+
+  document.getElementById('date-line').textContent =
+    now.toLocaleDateString('en-AU', {
+      weekday:'long', day:'numeric', month:'long', year:'numeric'
+    }).toUpperCase();
+
+  const h = now.getHours();
+  document.getElementById('greeting').textContent =
+    h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
+
+  document.getElementById('family-name').textContent = C.familyName;
+
+  const dow = now.getDay();
+  const pill = document.getElementById('day-pill');
+  if (dow === 0 || dow === 6) {
+    pill.className = 'day-pill weekend';
+    pill.textContent = 'Weekend';
+  } else if (C.schoolDays.includes(dow)) {
+    pill.className = 'day-pill school';
+    pill.textContent = 'School day';
+  } else {
+    pill.className = 'day-pill holiday';
+    pill.textContent = 'No school';
+  }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *  EVENTS
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function renderEvents() {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const upcoming = C.events
+    .map(e => ({ ...e, days: Math.round((new Date(e.date + 'T00:00:00') - today) / 86400000) }))
+    .filter(e => e.days >= 0)
+    .sort((a,b) => a.days - b.days)
+    .slice(0, 3);
+
+  document.getElementById('events').innerHTML = upcoming.map(e => {
+    const dateStr = new Date(e.date + 'T00:00:00').toLocaleDateString('en-AU', {
+      weekday:'short', day:'numeric', month:'long'
+    });
+    const nColor = e.days <= 7 ? 'color:var(--warm)' : e.days <= 30 ? 'color:var(--teal)' : '';
+    const inner  = e.days === 0
+      ? `<span class="event-n">🎉</span>`
+      : `<span class="event-n" style="${nColor}">${e.days}</span><span class="event-nl">days</span>`;
+
+    return `<div class="event">
+      <div class="event-box">${inner}</div>
+      <div>
+        <div class="event-name">${e.emoji} ${e.name}</div>
+        <div class="event-date">${e.days === 0 ? 'Today!' : dateStr}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *  WEATHER
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function wxIcon(code) {
+  code = +code;
+  if (code === 113) return '☀️';
+  if (code <= 116)  return '⛅';
+  if (code <= 119)  return '☁️';
+  if (code <= 143)  return '🌫️';
+  if (code <= 176)  return '🌦️';
+  if (code <= 179)  return '🌨️';
+  if (code <= 185)  return '🌧️';
+  if (code <= 200)  return '⛈️';
+  if (code <= 230)  return '❄️';
+  if (code <= 260)  return '🌫️';
+  if (code <= 299)  return '🌦️';
+  if (code <= 320)  return '🌧️';
+  if (code <= 335)  return '🌨️';
+  if (code <= 395)  return '⛈️';
+  return '🌡️';
+}
+
+async function fetchWeather() {
+  document.getElementById('wx-label').textContent = `Weather — ${C.city}`;
+  try {
+    const res  = await fetch(`https://wttr.in/${encodeURIComponent(C.city)}?format=j1`);
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    const cur   = data.current_condition[0];
+    const today = data.weather[0];
+    const days  = data.weather.slice(0, 3);
+
+    document.getElementById('wx-icon').textContent  = wxIcon(cur.weatherCode);
+    document.getElementById('wx-temp').textContent  = cur.temp_C;
+    document.getElementById('wx-desc').textContent  = cur.weatherDesc[0].value;
+    document.getElementById('wx-feels').textContent = cur.FeelsLikeC + '°';
+    document.getElementById('wx-high').textContent  = today.maxtempC + '°';
+    document.getElementById('wx-low').textContent   = today.mintempC + '°';
+    document.getElementById('wx-hum').textContent   = cur.humidity + '%';
+
+    const fmt = s => s.replace(/ AM$/,'am').replace(/ PM$/,'pm');
+    document.getElementById('wx-rise').textContent = fmt(today.astronomy[0].sunrise);
+    document.getElementById('wx-set').textContent  = fmt(today.astronomy[0].sunset);
+
+    const DAY = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    document.getElementById('forecast').innerHTML = days.map((d, i) => {
+      const name = i === 0 ? 'Today' : DAY[new Date(d.date).getDay()];
+      const mid  = d.hourly[Math.floor(d.hourly.length / 2)];
+      return `<div class="fc-day">
+        <span class="fc-name">${name}</span>
+        <span class="fc-icon">${wxIcon(mid?.weatherCode ?? 113)}</span>
+        <span class="fc-temps">
+          <span class="fc-hi">${d.maxtempC}°</span><span class="fc-sep"> / </span><span class="fc-lo">${d.mintempC}°</span>
+        </span>
+      </div>`;
+    }).join('');
+
+    document.getElementById('status').textContent =
+      'Updated ' + new Date().toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit', hour12:false });
+  } catch {
+    document.getElementById('wx-desc').textContent = 'Weather unavailable';
+  }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *  BOOT
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+tick();
+setInterval(tick, 1000);
+
+renderEvents();
+setInterval(renderEvents, 60_000);
+
+fetchWeather();
+setInterval(fetchWeather, C.weatherRefreshMins * 60_000);
+
+setTimeout(() => location.reload(), C.pageRefreshMins * 60_000);
+</script>
+</body>
+</html>
