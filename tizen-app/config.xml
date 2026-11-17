@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets"
+        xmlns:tizen="http://tizen.org/ns/widgets"
+        id="http://kramlem.com/FamilyDashboard"
+        version="1.0.0"
+        viewmodes="fullscreen">
+
+    <tizen:application id="kramlDB001.dashboard"
+                       package="kramlDB001"
+                       required_version="2.3"/>
+
+    <content src="index.html"/>
+
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:privilege name="http://tizen.org/privilege/network.get"/>
+
+    <access origin="https://www.kramlem.com" subdomains="true"/>
+    <access origin="*" subdomains="true"/>
+
+    <name>Family Dashboard</name>
+    <icon src="icon.png"/>
+    <description>Kramlem Family Dashboard</description>
+
+    <feature name="http://tizen.org/feature/screen.size.all"/>
+</widget>
