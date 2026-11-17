@@ -717,7 +717,11 @@ async function fetchPhotos() {
     _photos = shuffle(list);
     _photoIdx = -1;
     showNextPhoto(); // show first photo immediately
-  } catch { /* no photos — dark background stays */ }
+  } catch {
+    _photos = shuffle(STATIC_PHOTOS);
+    _photoIdx = -1;
+    showNextPhoto();
+  }
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
