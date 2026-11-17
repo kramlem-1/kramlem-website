@@ -1,0 +1,93 @@
+const ical = require('node-ical');
+
+/*
+ * GET /api/calendar
+ *
+ * Returns upcoming family calendar events as JSON.
+ * Reads iCal feed URLs from environment variables:
+ *   ICAL_MARK     — secret iCal address for Mark's calendar
+ *   ICAL_MELANIE  — secret iCal address for Melanie's calendar
+ *   ICAL_HARRY    — secret iCal address for Harry's calendar
+ *   ICAL_CHARLIZE — secret iCal address for Charlize's calendar
+ *
+ * To get a secret iCal URL:
+ *   Google Calendar → Settings → [Calendar name] →
+ *   "Integrate calendar" → "Secret address in iCal format"
+ */
+
+const DAYS_AHEAD = 14;
+
+function fetchCalendar(url) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), 8000);
+    ical.fromURL(url, {}, (err, data) => {
+      clearTimeout(timer);
+      if (err) reject(err);
+      else resolve(data);
+    });
+  });
+}
+
+module.exports = async (req, res) => {
+  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+
+  const sources = [
+    { url: process.env.ICAL_MARK,     name: 'Mark' },
+    { url: process.env.ICAL_MELANIE,  name: 'Melanie' },
+    { url: process.env.ICAL_HARRY,    name: 'Harry' },
+    { url: process.env.ICAL_CHARLIZE, name: 'Charlize' },
+  ].filter(s => s.url);
+
+  if (!sources.length) {
+    return res.status(500).json({
+      error: 'No calendar URLs configured.',
+      hint: 'Add ICAL_MARK, ICAL_MELANIE, ICAL_HARRY and/or ICAL_CHARLIZE as Vercel environment variables.',
+    });
+  }
+
+  const now = new Date();
+  const cutoff = new Date(now.getTime() + DAYS_AHEAD * 24 * 60 * 60 * 1000);
+
+  const fetches = sources.map(async ({ url, name }) => {
+    try {
+      const data = await fetchCalendar(url);
+      return { name, data };
+    } catch {
+      return { name, data: {} };
+    }
+  });
+
+  const results = await Promise.all(fetches);
+
+  const seen = new Set();
+  const events = [];
+
+  for (const { data } of results) {
+    for (const ev of Object.values(data)) {
+      if (ev.type !== 'VEVENT') continue;
+
+      const start = ev.start instanceof Date ? ev.start : new Date(ev.start);
+      if (!start || isNaN(start)) continue;
+      if (start < now || start > cutoff) continue;
+
+      // Deduplicate events that appear on multiple family calendars
+      const key = (ev.summary || '') + '|' + start.toISOString().slice(0, 16);
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      const end = ev.end instanceof Date ? ev.end : (ev.end ? new Date(ev.end) : null);
+
+      events.push({
+        summary:  ev.summary  || '(No title)',
+        location: ev.location || '',
+        start:    start.toISOString(),
+        end:      end ? end.toISOString() : null,
+        allDay:   ev.datetype === 'date',
+      });
+    }
+  }
+
+  events.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+  res.status(200).json({ events, updated: now.toISOString() });
+};

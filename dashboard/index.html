@@ -182,23 +182,34 @@
 
     .events { display: flex; flex-direction: column; gap: 2.2vh; }
 
-    .event { display: flex; align-items: center; gap: 2vw; }
+    /* ── CALENDAR EVENTS ── */
+    .cal-block { margin-top: 2.5vh; }
 
-    .event-box {
-      width: 7.5vh; height: 7.5vh;
-      border-radius: 1.2vh;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      flex-shrink: 0;
-      gap: 0.1vh;
+    .cal-block-label {
+      font-size: 1.1vh;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 1.2vh;
     }
-    .event-n  { font-family: var(--font-d); font-size: 2.8vh; font-weight: 400; font-variant-numeric: tabular-nums; line-height: 1; }
-    .event-nl { font-size: 1vh; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
 
-    .event-name { font-size: 2.4vh; font-weight: 400; }
-    .event-date { font-size: 1.5vh; color: var(--dim); margin-top: 0.2vh; }
+    .cal-event {
+      padding: 1.4vh 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 0.3vh;
+    }
+    .cal-event:last-child { border-bottom: none; }
+
+    .cal-event-name { font-size: 2.4vh; font-weight: 400; color: var(--text); line-height: 1.2; }
+    .cal-event-meta { font-size: 1.6vh; color: var(--dim); }
+    .cal-event-loc  { font-size: 1.4vh; color: var(--dim); opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%; }
+
+    .cal-nothing { font-size: 1.9vh; color: var(--dim); font-style: italic; }
+
+    .cal-date-prefix { color: var(--accent); font-weight: 500; }
 
     /* ── STATUS ── */
     #status {
@@ -270,7 +281,8 @@
         Good <span id="greeting">morning</span>,
         <span class="accent" id="family-name">Kramlems</span><span class="day-pill" id="day-pill"></span>
       </div>
-      <div class="events" id="events"></div>
+      <div id="cal-today" class="cal-block"></div>
+      <div id="cal-upcoming" class="cal-block"></div>
     </div>
 
   </div>
@@ -285,19 +297,14 @@
 const C = {
   city:       'Sydney',
   familyName: 'Kramlems',
-
-  /* Upcoming events: { name, date: 'YYYY-MM-DD', emoji } */
-  events: [
-    { name: "Christmas",       date: "2026-12-25", emoji: "🎄" },
-    { name: "New Year's Eve",  date: "2026-12-31", emoji: "🎆" },
-    { name: "Australia Day",   date: "2027-01-26", emoji: "🇦🇺" },
-  ],
+  timeZone:   'Australia/Sydney',
 
   /* School days (0=Sun … 6=Sat) */
   schoolDays: [1,2,3,4,5],
 
-  weatherRefreshMins: 30,
-  pageRefreshMins:    15,
+  weatherRefreshMins:  30,
+  calendarRefreshMins: 15,
+  pageRefreshMins:     60,
 };
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -337,35 +344,90 @@ function tick() {
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- *  EVENTS
+ *  CALENDAR
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-function renderEvents() {
-  const today = new Date();
-  today.setHours(0,0,0,0);
 
-  const upcoming = C.events
-    .map(e => ({ ...e, days: Math.round((new Date(e.date + 'T00:00:00') - today) / 86400000) }))
-    .filter(e => e.days >= 0)
-    .sort((a,b) => a.days - b.days)
-    .slice(0, 3);
+// Return 'YYYY-MM-DD' in Sydney timezone for any Date/ISO string
+function sydDate(iso) {
+  return new Date(iso).toLocaleDateString('en-CA', { timeZone: C.timeZone });
+}
 
-  document.getElementById('events').innerHTML = upcoming.map(e => {
-    const dateStr = new Date(e.date + 'T00:00:00').toLocaleDateString('en-AU', {
-      weekday:'short', day:'numeric', month:'long'
-    });
-    const nColor = e.days <= 7 ? 'color:var(--warm)' : e.days <= 30 ? 'color:var(--teal)' : '';
-    const inner  = e.days === 0
-      ? `<span class="event-n">🎉</span>`
-      : `<span class="event-n" style="${nColor}">${e.days}</span><span class="event-nl">days</span>`;
+function fmtTime(iso, allDay) {
+  if (allDay) return 'All day';
+  return new Date(iso).toLocaleTimeString('en-AU', {
+    timeZone: C.timeZone, hour: 'numeric', minute: '2-digit', hour12: true
+  });
+}
 
-    return `<div class="event">
-      <div class="event-box">${inner}</div>
-      <div>
-        <div class="event-name">${e.emoji} ${e.name}</div>
-        <div class="event-date">${e.days === 0 ? 'Today!' : dateStr}</div>
-      </div>
-    </div>`;
-  }).join('');
+function fmtTimeRange(start, end, allDay) {
+  if (allDay) return 'All day';
+  const s = fmtTime(start, false);
+  if (!end) return s;
+  return s + ' – ' + fmtTime(end, false);
+}
+
+function fmtDay(iso) {
+  return new Date(iso).toLocaleDateString('en-AU', {
+    timeZone: C.timeZone, weekday: 'short', day: 'numeric', month: 'short'
+  });
+}
+
+function renderCalendar(events) {
+  const todayStr = sydDate(new Date());
+  const now      = new Date();
+
+  // Today: started today and not yet ended (or all-day today)
+  const todayEvs = events.filter(e => {
+    if (sydDate(e.start) !== todayStr) return false;
+    if (!e.allDay && e.end && new Date(e.end) < now) return false;
+    return true;
+  });
+
+  // Upcoming: starts after today, within 14 days
+  const upcomingEvs = events
+    .filter(e => sydDate(e.start) > todayStr)
+    .slice(0, 4);
+
+  const todayEl    = document.getElementById('cal-today');
+  const upcomingEl = document.getElementById('cal-upcoming');
+
+  todayEl.innerHTML = '<div class="cal-block-label">Today</div>' + (
+    todayEvs.length
+      ? todayEvs.map(e => `
+          <div class="cal-event">
+            <div class="cal-event-name">${e.summary}</div>
+            <div class="cal-event-meta">${fmtTimeRange(e.start, e.end, e.allDay)}</div>
+            ${e.location ? `<div class="cal-event-loc">📍 ${e.location}</div>` : ''}
+          </div>`)
+        .join('')
+      : '<div class="cal-nothing">Nothing on today</div>'
+  );
+
+  upcomingEl.innerHTML = upcomingEvs.length
+    ? '<div class="cal-block-label">Coming up</div>' +
+      upcomingEvs.map(e => `
+        <div class="cal-event">
+          <div class="cal-event-name">
+            <span class="cal-date-prefix">${fmtDay(e.start)} </span>${e.summary}
+          </div>
+          <div class="cal-event-meta">${fmtTimeRange(e.start, e.end, e.allDay)}</div>
+          ${e.location ? `<div class="cal-event-loc">📍 ${e.location}</div>` : ''}
+        </div>`)
+      .join('')
+    : '';
+}
+
+async function fetchCalendar() {
+  try {
+    const res  = await fetch('/api/calendar');
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    if (data.events) renderCalendar(data.events);
+  } catch {
+    document.getElementById('cal-today').innerHTML =
+      '<div class="cal-block-label">Today</div>' +
+      '<div class="cal-nothing">Calendar unavailable</div>';
+  }
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -438,8 +500,8 @@ async function fetchWeather() {
 tick();
 setInterval(tick, 1000);
 
-renderEvents();
-setInterval(renderEvents, 60_000);
+fetchCalendar();
+setInterval(fetchCalendar, C.calendarRefreshMins * 60_000);
 
 fetchWeather();
 setInterval(fetchWeather, C.weatherRefreshMins * 60_000);
