@@ -38,16 +38,15 @@
 
 const http = require('http');
 
-const CLIENT_ID     = process.env.ONEDRIVE_CLIENT_ID;
-const CLIENT_SECRET = process.env.ONEDRIVE_CLIENT_SECRET;
-const REDIRECT_URI  = 'http://localhost:8080/callback';
-const SCOPES        = 'Files.Read offline_access';
-const TENANT        = 'consumers';
+const CLIENT_ID    = process.env.ONEDRIVE_CLIENT_ID;
+const REDIRECT_URI = 'http://localhost:8080/callback';
+const SCOPES       = 'Files.Read offline_access';
+const TENANT       = 'consumers';
 
-if (!CLIENT_ID || !CLIENT_SECRET) {
-  console.error('Set ONEDRIVE_CLIENT_ID and ONEDRIVE_CLIENT_SECRET before running.');
+if (!CLIENT_ID) {
+  console.error('Set ONEDRIVE_CLIENT_ID before running.');
   console.error('Example:');
-  console.error('  ONEDRIVE_CLIENT_ID=xxx ONEDRIVE_CLIENT_SECRET=yyy node scripts/get-onedrive-token.js');
+  console.error('  $env:ONEDRIVE_CLIENT_ID="xxx"; node scripts/get-onedrive-token.js');
   process.exit(1);
 }
 
@@ -92,12 +91,11 @@ const server = http.createServer(async (req, res) => {
   server.close();
 
   const params = new URLSearchParams({
-    client_id:     CLIENT_ID,
-    client_secret: CLIENT_SECRET,
+    client_id:    CLIENT_ID,
     code,
-    redirect_uri:  REDIRECT_URI,
-    grant_type:    'authorization_code',
-    scope:         SCOPES,
+    redirect_uri: REDIRECT_URI,
+    grant_type:   'authorization_code',
+    scope:        SCOPES,
   });
 
   try {
@@ -119,7 +117,6 @@ const server = http.createServer(async (req, res) => {
 
     console.log('\n=== SUCCESS — add these to Vercel environment variables ===\n');
     console.log(`ONEDRIVE_CLIENT_ID=${CLIENT_ID}`);
-    console.log(`ONEDRIVE_CLIENT_SECRET=${CLIENT_SECRET}`);
     console.log(`ONEDRIVE_REFRESH_TOKEN=${tokens.refresh_token}`);
     console.log(`ONEDRIVE_FOLDER=Family Dashboard Photos`);
     console.log('\nDone!\n');

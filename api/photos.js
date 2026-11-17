@@ -17,10 +17,9 @@ const TENANT    = 'consumers';
 const TOKEN_URL = `https://login.microsoftonline.com/${TENANT}/oauth2/v2.0/token`;
 const GRAPH     = 'https://graph.microsoft.com/v1.0';
 
-async function getAccessToken(clientId, clientSecret, refreshToken) {
+async function getAccessToken(clientId, refreshToken) {
   const params = new URLSearchParams({
     client_id:     clientId,
-    client_secret: clientSecret,
     refresh_token: refreshToken,
     grant_type:    'refresh_token',
     scope:         'Files.Read offline_access',
@@ -42,17 +41,16 @@ module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate=1800');
 
   const clientId     = process.env.ONEDRIVE_CLIENT_ID;
-  const clientSecret = process.env.ONEDRIVE_CLIENT_SECRET;
   const refreshToken = process.env.ONEDRIVE_REFRESH_TOKEN;
 
-  if (!clientId || !clientSecret || !refreshToken) {
+  if (!clientId || !refreshToken) {
     return res.status(200).json({ photos: [], error: 'OneDrive credentials not configured. Run scripts/get-onedrive-token.js.' });
   }
 
   const folder = (process.env.ONEDRIVE_FOLDER || 'Family Dashboard Photos').trim();
 
   try {
-    const accessToken = await getAccessToken(clientId, clientSecret, refreshToken);
+    const accessToken = await getAccessToken(clientId, refreshToken);
 
     // Restrict explicitly to the named folder — Files.Read allows broader access,
     // so we always use the specific folder path rather than a root search.
