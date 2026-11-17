@@ -1,44 +1,78 @@
 /*
  * GET /api/photos
  *
- * Returns thumbnail URLs for images in a public OneDrive shared folder.
+ * Returns thumbnail URLs for images in a OneDrive folder.
  *
- * SETUP
- *   1. In OneDrive, right-click your photos folder → Share →
- *      "Anyone with the link can view" → Copy link
- *   2. Add the copied URL as ONEDRIVE_PHOTOS_URL in Vercel env vars
+ * Required env vars (obtain via scripts/get-onedrive-token.js):
+ *   ONEDRIVE_CLIENT_ID      — Azure app registration client ID
+ *   ONEDRIVE_CLIENT_SECRET  — Azure app registration client secret
+ *   ONEDRIVE_REFRESH_TOKEN  — Long-lived refresh token from OAuth flow
+ *   ONEDRIVE_FOLDER         — Folder name in OneDrive (default: "Family Dashboard Photos")
  *
- * Returns { photos: [url, ...] }  — empty array if not configured or on error.
+ * Returns { photos: [url, ...] } — empty array if not configured or on error.
  * Add ?debug=1 to see the raw API response for troubleshooting.
  */
 
-module.exports = async (req, res) => {
-  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=7200');
+const TENANT    = 'consumers';
+const TOKEN_URL = `https://login.microsoftonline.com/${TENANT}/oauth2/v2.0/token`;
+const GRAPH     = 'https://graph.microsoft.com/v1.0';
 
-  const shareUrl = process.env.ONEDRIVE_PHOTOS_URL;
-  if (!shareUrl) return res.status(200).json({ photos: [], error: 'ONEDRIVE_PHOTOS_URL not set' });
+async function getAccessToken(clientId, clientSecret, refreshToken) {
+  const params = new URLSearchParams({
+    client_id:     clientId,
+    client_secret: clientSecret,
+    refresh_token: refreshToken,
+    grant_type:    'refresh_token',
+    scope:         'Files.Read offline_access',
+  });
+
+  const r = await fetch(TOKEN_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body:    params.toString(),
+    signal:  AbortSignal.timeout(8000),
+  });
+
+  const data = await r.json();
+  if (!r.ok) throw new Error(`Token refresh failed: ${data.error_description || data.error}`);
+  return data.access_token;
+}
+
+module.exports = async (req, res) => {
+  res.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate=1800');
+
+  const clientId     = process.env.ONEDRIVE_CLIENT_ID;
+  const clientSecret = process.env.ONEDRIVE_CLIENT_SECRET;
+  const refreshToken = process.env.ONEDRIVE_REFRESH_TOKEN;
+
+  if (!clientId || !clientSecret || !refreshToken) {
+    return res.status(200).json({ photos: [], error: 'OneDrive credentials not configured. Run scripts/get-onedrive-token.js.' });
+  }
+
+  const folder = (process.env.ONEDRIVE_FOLDER || 'Family Dashboard Photos').trim();
 
   try {
-    // Encode the share URL as a Graph API sharing token
-    const shareId = 'u!' + Buffer.from(shareUrl)
-      .toString('base64')
-      .replace(/=/g, '')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_');
+    const accessToken = await getAccessToken(clientId, clientSecret, refreshToken);
 
+    // Restrict explicitly to the named folder — Files.Read allows broader access,
+    // so we always use the specific folder path rather than a root search.
+    const folderEncoded = folder.split('/').map(encodeURIComponent).join('/');
     const apiUrl =
-      `https://graph.microsoft.com/v1.0/shares/${shareId}/driveItem/children` +
+      `${GRAPH}/me/drive/root:/${folderEncoded}:/children` +
       `?$select=name,file&$expand=thumbnails($select=large)`;
 
     const r = await fetch(apiUrl, {
-      headers: { Accept: 'application/json' },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept:        'application/json',
+      },
       signal: AbortSignal.timeout(10000),
     });
 
     const body = await r.json();
 
     if (req.query.debug === '1') {
-      return res.status(200).json({ status: r.status, body });
+      return res.status(200).json({ status: r.status, folder, body });
     }
 
     if (!r.ok) throw new Error(`Graph API ${r.status}: ${body.error?.message || JSON.stringify(body)}`);
