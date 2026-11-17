@@ -383,7 +383,7 @@
     <div class="panel countdown-panel" id="countdown-panel">
       <div class="cd-emoji">🌴</div>
       <div class="cd-days" id="cd-days">—</div>
-      <div class="cd-unit">days to go</div>
+      <div class="cd-unit" id="cd-unit">days to go</div>
       <div class="cd-name" id="cd-name">Caribbean</div>
       <div class="cd-hms" id="cd-hms"></div>
       <div class="cd-date" id="cd-date"></div>
@@ -637,15 +637,20 @@ function tickCountdown() {
   const mins  = Math.floor((totalSecs % 3600) / 60);
   const secs  = totalSecs % 60;
 
-  daysEl.textContent = days;
+  const unitEl = document.getElementById('cd-unit');
 
   if (days < 7) {
-    // Show hours:mins:secs sub-counter when close
+    // Final week: show days + HH:MM:SS
+    daysEl.textContent = days;
+    unitEl.textContent = days === 1 ? 'day to go' : 'days to go';
     hmsEl.textContent =
       String(hours).padStart(2,'0') + ':' +
       String(mins).padStart(2,'0')  + ':' +
       String(secs).padStart(2,'0');
   } else {
+    // Show days and hours
+    daysEl.textContent = days;
+    unitEl.textContent = (days === 1 ? 'day' : 'days') + ' ' + hours + (hours === 1 ? ' hr' : ' hrs') + ' to go';
     hmsEl.textContent = '';
   }
 }
