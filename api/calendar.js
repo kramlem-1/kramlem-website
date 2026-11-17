@@ -132,7 +132,7 @@ module.exports = async (req, res) => {
 
   events.sort((a, b) => new Date(a.start) - new Date(b.start));
 
-  // ?debug=1 — returns raw parsed fields for the first 5 events (remove before sharing publicly)
+  // ?debug=1 — returns raw parsed fields for the first 10 events (remove before sharing publicly)
   if (req.query.debug === '1') {
     const raw = [];
     for (const { data } of results) {
