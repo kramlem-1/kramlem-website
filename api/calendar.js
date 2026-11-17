@@ -110,13 +110,13 @@ module.exports = async (req, res) => {
       const start = ev.start instanceof Date ? ev.start : new Date(ev.start);
       if (!start || isNaN(start)) continue;
       if (start < now || start > cutoff) continue;
-      if (isExcluded(ev.summary)) continue;
-      if (hasExternalAttendee(ev)) continue;
-
-      // Deduplicate events that appear on multiple family calendars
+      // Deduplicate before filtering so a filtered event blocks all its duplicates
       const key = (ev.summary || '') + '|' + start.toISOString().slice(0, 16);
       if (seen.has(key)) continue;
       seen.add(key);
+
+      if (isExcluded(ev.summary)) continue;
+      if (hasExternalAttendee(ev)) continue;
 
       const end = ev.end instanceof Date ? ev.end : (ev.end ? new Date(ev.end) : null);
 
