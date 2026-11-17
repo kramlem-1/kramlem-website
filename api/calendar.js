@@ -5,10 +5,11 @@ const ical = require('node-ical');
  *
  * Returns upcoming family calendar events as JSON.
  * Reads iCal feed URLs from environment variables:
- *   ICAL_MARK     — secret iCal address for Mark's FAMILY calendar
- *   ICAL_MELANIE  — secret iCal address for Melanie's FAMILY calendar
- *   ICAL_HARRY    — secret iCal address for Harry's FAMILY calendar
- *   ICAL_CHARLIZE — secret iCal address for Charlize's FAMILY calendar
+ *   ICAL_JARVIS   — secret iCal address for the Jarvis family calendar (preferred)
+ *   ICAL_MARK     — secret iCal address for Mark's calendar (optional)
+ *   ICAL_MELANIE  — secret iCal address for Melanie's calendar (optional)
+ *   ICAL_HARRY    — secret iCal address for Harry's calendar (optional)
+ *   ICAL_CHARLIZE — secret iCal address for Charlize's calendar (optional)
  *
  * To get a secret iCal URL:
  *   Google Calendar → Settings → [Calendar name] →
@@ -73,6 +74,7 @@ module.exports = async (req, res) => {
   }
 
   const sources = [
+    { url: process.env.ICAL_JARVIS,   name: 'Jarvis' },
     { url: process.env.ICAL_MARK,     name: 'Mark' },
     { url: process.env.ICAL_MELANIE,  name: 'Melanie' },
     { url: process.env.ICAL_HARRY,    name: 'Harry' },
@@ -82,7 +84,7 @@ module.exports = async (req, res) => {
   if (!sources.length) {
     return res.status(500).json({
       error: 'No calendar URLs configured.',
-      hint: 'Add ICAL_MARK, ICAL_MELANIE, ICAL_HARRY and/or ICAL_CHARLIZE as Vercel environment variables.',
+      hint: 'Add ICAL_JARVIS (and/or ICAL_MARK, ICAL_MELANIE, ICAL_HARRY, ICAL_CHARLIZE) as Vercel environment variables.',
     });
   }
 
