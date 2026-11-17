@@ -5,14 +5,20 @@ const ical = require('node-ical');
  *
  * Returns upcoming family calendar events as JSON.
  * Reads iCal feed URLs from environment variables:
- *   ICAL_MARK     — secret iCal address for Mark's calendar
- *   ICAL_MELANIE  — secret iCal address for Melanie's calendar
- *   ICAL_HARRY    — secret iCal address for Harry's calendar
- *   ICAL_CHARLIZE — secret iCal address for Charlize's calendar
+ *   ICAL_MARK     — secret iCal address for Mark's FAMILY calendar
+ *   ICAL_MELANIE  — secret iCal address for Melanie's FAMILY calendar
+ *   ICAL_HARRY    — secret iCal address for Harry's FAMILY calendar
+ *   ICAL_CHARLIZE — secret iCal address for Charlize's FAMILY calendar
  *
  * To get a secret iCal URL:
  *   Google Calendar → Settings → [Calendar name] →
  *   "Integrate calendar" → "Secret address in iCal format"
+ *
+ * IMPORTANT: use a dedicated family/shared calendar's iCal URL,
+ * not your main calendar, to avoid personal/work events appearing.
+ *
+ * Optional keyword blocklist (comma-separated, case-insensitive):
+ *   ICAL_EXCLUDE=standup,1:1,interview,dentist
  */
 
 const DAYS_AHEAD = 14;
@@ -30,6 +36,18 @@ function fetchCalendar(url) {
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+
+  // Build blocklist from ICAL_EXCLUDE env var (comma-separated keywords)
+  const excludeTerms = (process.env.ICAL_EXCLUDE || '')
+    .split(',')
+    .map(s => s.trim().toLowerCase())
+    .filter(Boolean);
+
+  function isExcluded(summary) {
+    if (!excludeTerms.length) return false;
+    const lower = (summary || '').toLowerCase();
+    return excludeTerms.some(term => lower.includes(term));
+  }
 
   const sources = [
     { url: process.env.ICAL_MARK,     name: 'Mark' },
@@ -69,6 +87,7 @@ module.exports = async (req, res) => {
       const start = ev.start instanceof Date ? ev.start : new Date(ev.start);
       if (!start || isNaN(start)) continue;
       if (start < now || start > cutoff) continue;
+      if (isExcluded(ev.summary)) continue;
 
       // Deduplicate events that appear on multiple family calendars
       const key = (ev.summary || '') + '|' + start.toISOString().slice(0, 16);
