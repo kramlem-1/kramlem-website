@@ -741,7 +741,7 @@ fetchWeather();
 setInterval(fetchWeather, C.weatherRefreshMins * 60_000);
 
 fetchPhotos();
-setInterval(showNextPhoto, 60_000); // rotate photo every minute
+setInterval(showNextPhoto, 20_000); // rotate photo every 20 seconds
 
 setTimeout(() => location.reload(), C.pageRefreshMins * 60_000);
 </script>
