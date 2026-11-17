@@ -134,32 +134,5 @@ module.exports = async (req, res) => {
 
   events.sort((a, b) => new Date(a.start) - new Date(b.start));
 
-  // ?debug=1 — shows upcoming events with why each was kept or dropped
-  if (req.query.debug === '1') {
-    const raw = [];
-    for (const { name, data } of results) {
-      for (const ev of Object.values(data)) {
-        if (ev.type !== 'VEVENT') continue;
-        const start = ev.start instanceof Date ? ev.start : new Date(ev.start);
-        if (!start || isNaN(start)) continue;
-        if (start < now || start > cutoff) continue; // only upcoming
-
-        const excluded = isExcluded(ev.summary);
-        const external = hasExternalAttendee(ev);
-        raw.push({
-          calendar: name,
-          summary:  ev.summary,
-          start:    start.toISOString(),
-          kept:     !excluded && !external,
-          reason:   excluded ? 'keyword' : external ? 'external-attendee' : null,
-          attendee: ev.attendee,
-          organizer: ev.organizer,
-        });
-      }
-    }
-    raw.sort((a, b) => new Date(a.start) - new Date(b.start));
-    return res.status(200).json({ debug: true, familyDomain, raw });
-  }
-
   res.status(200).json({ events, updated: now.toISOString() });
 };

@@ -271,6 +271,38 @@
       color: var(--warm);
     }
 
+    /* ── PHOTO BACKGROUND ── */
+    #photo-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background-size: cover;
+      background-position: center;
+    }
+
+    #photo-bg-next {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background-size: cover;
+      background-position: center;
+      opacity: 0;
+    }
+
+    /* Dark overlay so text stays readable over photos */
+    #photo-bg::after, #photo-bg-next::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(9, 9, 16, 0.70);
+    }
+
+    /* Fade transition on the outgoing layer */
+    #photo-bg.fading {
+      transition: opacity 2s ease;
+      opacity: 0;
+    }
+
     /* ── STATUS ── */
     #status {
       position: fixed;
@@ -284,6 +316,8 @@
 </head>
 <body>
 
+<div id="photo-bg-next"></div>
+<div id="photo-bg"></div>
 <div class="app">
 
   <div class="hero">
@@ -617,6 +651,68 @@ function tickCountdown() {
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *  PHOTO SLIDESHOW
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+let _photos = [];
+let _photoIdx = 0;
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function preloadImage(url) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = img.onerror = () => resolve(url);
+    img.src = url;
+  });
+}
+
+async function showNextPhoto() {
+  if (!_photos.length) return;
+
+  const bg   = document.getElementById('photo-bg');
+  const next = document.getElementById('photo-bg-next');
+
+  _photoIdx = (_photoIdx + 1) % _photos.length;
+  const url = _photos[_photoIdx];
+
+  // Preload into the back layer
+  await preloadImage(url);
+  next.style.backgroundImage = `url('${url}')`;
+  next.style.zIndex = '-1';
+  bg.style.zIndex   = '-2';
+
+  // Swap z-index after a tick so the transition is visible
+  requestAnimationFrame(() => {
+    bg.classList.add('fading');
+    setTimeout(() => {
+      bg.style.backgroundImage  = `url('${url}')`;
+      bg.style.zIndex           = '-1';
+      next.style.zIndex         = '-2';
+      bg.classList.remove('fading');
+    }, 2000);
+  });
+}
+
+async function fetchPhotos() {
+  try {
+    const res  = await fetch('/api/photos');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.photos && data.photos.length) {
+      _photos = shuffle(data.photos);
+      _photoIdx = -1;
+      showNextPhoto(); // show first photo immediately
+    }
+  } catch { /* no photos — dark background stays */ }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  *  BOOT
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 tick();
@@ -628,6 +724,9 @@ setInterval(fetchCalendar, C.calendarRefreshMins * 60_000);
 
 fetchWeather();
 setInterval(fetchWeather, C.weatherRefreshMins * 60_000);
+
+fetchPhotos();
+setInterval(showNextPhoto, 60_000); // rotate photo every minute
 
 setTimeout(() => location.reload(), C.pageRefreshMins * 60_000);
 </script>
