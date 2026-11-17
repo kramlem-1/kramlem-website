@@ -45,7 +45,7 @@
       display: grid;
       grid-template-rows: 2fr 3fr;
       position: relative;
-      z-index: 1;
+      z-index: 2;
     }
 
     /* ── HERO ── */
@@ -691,16 +691,16 @@ async function showNextPhoto() {
   // Preload into the back layer
   await preloadImage(url);
   next.style.backgroundImage = `url('${url}')`;
-  next.style.zIndex = '-1';
-  bg.style.zIndex   = '-2';
+  next.style.zIndex = '1';
+  bg.style.zIndex   = '0';
 
   // Swap z-index after a tick so the transition is visible
   requestAnimationFrame(() => {
     bg.classList.add('fading');
     setTimeout(() => {
       bg.style.backgroundImage  = `url('${url}')`;
-      bg.style.zIndex           = '-1';
-      next.style.zIndex         = '-2';
+      bg.style.zIndex           = '1';
+      next.style.zIndex         = '0';
       bg.classList.remove('fading');
     }, 2000);
   });
