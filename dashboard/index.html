@@ -43,7 +43,8 @@
       width: 100vw;
       height: 100vh;
       display: grid;
-      grid-template-rows: 22% minmax(0, 1fr);
+      grid-template-rows: 27% minmax(0, 1fr);
+      row-gap: 1.2vh;
       padding: 1.5vh 1.5vw;
       position: relative;
       z-index: 2;
@@ -72,7 +73,7 @@
 
     .clock {
       font-family: var(--font-d);
-      font-size: 12vh;
+      font-size: 13vh;
       font-weight: 300;
       line-height: 1;
       letter-spacing: -0.02em;
@@ -89,16 +90,18 @@
     .panels {
       display: grid;
       grid-template-columns: 28fr 44fr 28fr;
+      gap: 1.2vw;
       min-height: 0;
     }
 
     .panel {
       padding: 2.5vh 2vw;
       min-height: 0;
-      border-right: 1px solid var(--border);
+      background: rgba(9, 9, 16, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 1.6vh;
       overflow: hidden;
     }
-    .panel:last-child { border-right: none; }
 
     /* ── WORD OF THE DAY ── */
     .wotd {
@@ -233,7 +236,7 @@
     .tv-msg-text {
       font-family: var(--font-d); font-size: 2.8vh; line-height: 1.25; color: var(--text);
       overflow-wrap: anywhere;
-      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+      display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
     }
     .tv-msg-count { font-size: 1.2vh; color: var(--dim); margin-top: 0.6vh; letter-spacing: 0.1em; }
 
@@ -350,7 +353,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: rgba(9, 9, 16, 0.62);
+      background: rgba(9, 9, 16, 0.45);
     }
 
     /* Fade transition on the outgoing layer */
