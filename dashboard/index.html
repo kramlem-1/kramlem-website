@@ -666,17 +666,20 @@ function tickCountdown() {
 
   const unitEl = document.getElementById('cd-unit');
 
-  daysEl.innerHTML = days + '<span class="cd-days-word">' + (days === 1 ? ' day' : ' days') + '</span>';
+  unitEl.textContent = 'to go';
 
-  if (days < 7) {
-    // Final week: show hours line plus HH:MM:SS
-    unitEl.textContent = hours + (hours === 1 ? ' hour to go' : ' hours to go');
+  if (diff < 86_400_000) {
+    // Final 24 hours: whole hours plus HH:MM:SS
+    const h = Math.floor(totalSecs / 3600);
+    daysEl.innerHTML = h + '<span class="cd-days-word">' + (h === 1 ? ' hour' : ' hours') + '</span>';
     hmsEl.textContent =
-      String(hours).padStart(2,'0') + ':' +
-      String(mins).padStart(2,'0')  + ':' +
+      String(h).padStart(2,'0')    + ':' +
+      String(mins).padStart(2,'0') + ':' +
       String(secs).padStart(2,'0');
   } else {
-    unitEl.textContent = hours + (hours === 1 ? ' hour to go' : ' hours to go');
+    // Calendar days in Sydney, so it matches counting days on a calendar
+    const n = Math.round((Date.parse(C.holidayDate) - Date.parse(sydDate(now))) / 86_400_000);
+    daysEl.innerHTML = n + '<span class="cd-days-word">' + (n === 1 ? ' day' : ' days') + '</span>';
     hmsEl.textContent = '';
   }
 }
