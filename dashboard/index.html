@@ -52,6 +52,7 @@
 
     /* ── HERO ── */
     .hero {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -195,15 +196,43 @@
     }
     .greeting .accent { color: var(--accent); }
 
-    .tv-msg {
-      border: 1px solid rgba(255,179,71,.35);
-      background: rgba(255,179,71,.10);
-      border-radius: 1.2vh;
-      padding: 1.6vh 1.4vw;
-      margin-bottom: 1.6vh;
+    /* ── FAMILY MESSAGE (chat bubble, left of the clock) ── */
+    #tv-msgs {
+      position: absolute;
+      left: 2vw;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24vw;
+      z-index: 3;
     }
-    .tv-msg-text { font-family: var(--font-d); font-size: 3.2vh; line-height: 1.25; color: var(--text); overflow-wrap: anywhere; }
-    .tv-msg-from { font-size: 1.4vh; letter-spacing: 0.15em; text-transform: uppercase; color: var(--warm); margin-top: 0.8vh; }
+    .tv-msg { display: flex; align-items: flex-end; gap: 0.9vw; animation: msgIn 0.6s ease; }
+    @keyframes msgIn { from { opacity: 0; transform: translateY(1vh); } to { opacity: 1; transform: none; } }
+    .tv-avatar {
+      flex: none;
+      width: 5vh; height: 5vh;
+      border-radius: 50%;
+      background: var(--warm);
+      color: #1a1205;
+      font-family: var(--font-d);
+      font-size: 2.4vh;
+      font-weight: 500;
+      display: flex; align-items: center; justify-content: center;
+      text-shadow: none;
+    }
+    .tv-bubble {
+      min-width: 0;
+      background: rgba(124,158,255,.28);
+      border: 1px solid rgba(124,158,255,.55);
+      border-radius: 2vh 2vh 2vh 0.4vh;
+      padding: 1.3vh 1.1vw 1.5vh;
+    }
+    .tv-msg-from { font-size: 1.3vh; letter-spacing: 0.16em; text-transform: uppercase; color: var(--warm); margin-bottom: 0.6vh; }
+    .tv-msg-text {
+      font-family: var(--font-d); font-size: 2.8vh; line-height: 1.25; color: var(--text);
+      overflow-wrap: anywhere;
+      display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .tv-msg-count { font-size: 1.2vh; color: var(--dim); margin-top: 0.6vh; letter-spacing: 0.1em; }
 
     .events { display: flex; flex-direction: column; gap: 2.2vh; }
 
@@ -318,7 +347,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: rgba(9, 9, 16, 0.45);
+      background: rgba(9, 9, 16, 0.62);
     }
 
     /* Fade transition on the outgoing layer */
@@ -349,6 +378,7 @@
     <div class="clock">
       <span id="hhmm">10:34</span><span class="sec" id="ss">:52</span>
     </div>
+    <div id="tv-msgs"></div>
   </div>
 
   <div class="panels">
@@ -375,7 +405,6 @@
         Good <span id="greeting">morning</span>,
         <span class="accent" id="family-name">Kramlems</span>
       </div>
-      <div id="tv-msgs"></div>
       <div id="cal-today" class="cal-block"></div>
       <div id="cal-upcoming" class="cal-block"></div>
     </div>
@@ -555,6 +584,33 @@ async function fetchCalendar() {
  *  FAMILY MESSAGES  (email jarvis@ with subject "TV: your message")
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 let _msgKey = '';
+let _msgs = [];
+let _msgIdx = 0;
+let _msgTimer = null;
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+}
+
+function showMessage() {
+  const host = document.getElementById('tv-msgs');
+  host.replaceChildren();
+  if (!_msgs.length) return;
+
+  const m = _msgs[_msgIdx % _msgs.length];
+  const bubble = el('div', 'tv-bubble');
+  bubble.append(el('div', 'tv-msg-from', 'From ' + m.from), el('div', 'tv-msg-text', m.text));
+  if (_msgs.length > 1) {
+    bubble.append(el('div', 'tv-msg-count', (_msgIdx % _msgs.length + 1) + ' of ' + _msgs.length + ' today'));
+  }
+
+  const box = el('div', 'tv-msg');
+  box.append(el('div', 'tv-avatar', m.from.charAt(0)), bubble);
+  host.append(box);
+}
 
 async function fetchMessages() {
   try {
@@ -565,21 +621,14 @@ async function fetchMessages() {
     if (key === _msgKey) return;
     _msgKey = key;
 
-    const el = document.getElementById('tv-msgs');
-    el.replaceChildren(...msgs.map(m => {
-      const box  = document.createElement('div');
-      const text = document.createElement('div');
-      const from = document.createElement('div');
-      box.className  = 'tv-msg';
-      text.className = 'tv-msg-text';
-      from.className = 'tv-msg-from';
-      text.textContent = m.text;
-      from.textContent = 'From ' + m.from;
-      box.append(text, from);
-      return box;
-    }));
+    _msgs = msgs;
+    _msgIdx = 0;
+    showMessage();
 
-    if (_lastEvents.length) renderCalendar(_lastEvents);
+    clearInterval(_msgTimer);
+    if (_msgs.length > 1) {
+      _msgTimer = setInterval(() => { _msgIdx++; showMessage(); }, 12_000);
+    }
   } catch {}
 }
 
