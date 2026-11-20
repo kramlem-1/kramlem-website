@@ -209,8 +209,10 @@
     @keyframes msgIn { from { opacity: 0; transform: translateY(1vh); } to { opacity: 1; transform: none; } }
     .tv-avatar {
       flex: none;
-      width: 5vh; height: 5vh;
+      width: 6.5vh; height: 6.5vh;
       border-radius: 50%;
+      overflow: hidden;
+      border: 0.3vh solid rgba(255,255,255,.35);
       background: var(--warm);
       color: #1a1205;
       font-family: var(--font-d);
@@ -219,6 +221,7 @@
       display: flex; align-items: center; justify-content: center;
       text-shadow: none;
     }
+    .tv-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .tv-bubble {
       min-width: 0;
       background: rgba(124,158,255,.28);
@@ -607,8 +610,14 @@ function showMessage() {
     bubble.append(el('div', 'tv-msg-count', (_msgIdx % _msgs.length + 1) + ' of ' + _msgs.length + ' today'));
   }
 
+  // Profile photo at /dashboard/avatars/<name>.jpg (dad, mum, harry, chacha); falls back to the initial
+  const avatar = el('div', 'tv-avatar', m.from.charAt(0));
+  const img = new Image();
+  img.onload = () => avatar.replaceChildren(img);
+  img.src = '/dashboard/avatars/' + m.from.toLowerCase().replace(/\s+/g, '') + '.jpg';
+
   const box = el('div', 'tv-msg');
-  box.append(el('div', 'tv-avatar', m.from.charAt(0)), bubble);
+  box.append(avatar, bubble);
   host.append(box);
 }
 
