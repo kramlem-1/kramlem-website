@@ -246,8 +246,6 @@
       font-variant-numeric: tabular-nums;
     }
 
-    .cd-days-word { font-size: 0.3em; letter-spacing: 0.04em; }
-
     .cd-unit {
       font-size: 1.8vh;
       font-weight: 500;
@@ -666,12 +664,11 @@ function tickCountdown() {
 
   const unitEl = document.getElementById('cd-unit');
 
-  unitEl.textContent = 'to go';
-
   if (diff < 86_400_000) {
     // Final 24 hours: whole hours plus HH:MM:SS
     const h = Math.floor(totalSecs / 3600);
-    daysEl.innerHTML = h + '<span class="cd-days-word">' + (h === 1 ? ' hour' : ' hours') + '</span>';
+    daysEl.textContent = h;
+    unitEl.textContent = (h === 1 ? 'hour' : 'hours') + ' to go';
     hmsEl.textContent =
       String(h).padStart(2,'0')    + ':' +
       String(mins).padStart(2,'0') + ':' +
@@ -679,7 +676,8 @@ function tickCountdown() {
   } else {
     // Calendar days in Sydney, so it matches counting days on a calendar
     const n = Math.round((Date.parse(C.holidayDate) - Date.parse(sydDate(now))) / 86_400_000);
-    daysEl.innerHTML = n + '<span class="cd-days-word">' + (n === 1 ? ' day' : ' days') + '</span>';
+    daysEl.textContent = n;
+    unitEl.textContent = (n === 1 ? 'day' : 'days') + ' to go';
     hmsEl.textContent = '';
   }
 }
