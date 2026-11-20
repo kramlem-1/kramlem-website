@@ -814,6 +814,19 @@ setInterval(showNextPhoto, 20_000);       // rotate photo every 20 seconds
 setInterval(fetchPhotos,   25 * 60_000);  // refresh URLs every 25 min before they expire
 
 setTimeout(() => location.reload(), C.pageRefreshMins * 60_000);
+
+let _pageSrc = null;
+async function checkForUpdate() {
+  try {
+    const res = await fetch('/dashboard?_=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return;
+    const src = await res.text();
+    if (_pageSrc === null) _pageSrc = src;
+    else if (src !== _pageSrc) location.reload();
+  } catch {}
+}
+checkForUpdate();
+setInterval(checkForUpdate, 5 * 60_000);
 </script>
 </body>
 </html>
