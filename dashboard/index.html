@@ -195,20 +195,6 @@
     }
     .greeting .accent { color: var(--accent); }
 
-    .day-pill {
-      display: inline-block;
-      padding: 0.35vh 1.1vh;
-      border-radius: 100px;
-      font-size: 1.3vh;
-      font-weight: 500;
-      letter-spacing: 0.06em;
-      vertical-align: 0.3em;
-      margin-left: 0.6vw;
-    }
-    .day-pill.school  { background: rgba(78,205,196,.12); color: var(--teal);   border: 1px solid rgba(78,205,196,.25); }
-    .day-pill.weekend { background: rgba(124,158,255,.12); color: var(--accent); border: 1px solid rgba(124,158,255,.25); }
-    .day-pill.holiday { background: rgba(255,179,71,.12);  color: var(--warm);  border: 1px solid rgba(255,179,71,.25); }
-
     .events { display: flex; flex-direction: column; gap: 2.2vh; }
 
     /* ── CALENDAR EVENTS ── */
@@ -377,7 +363,7 @@
       <div class="label">Today</div>
       <div class="greeting">
         Good <span id="greeting">morning</span>,
-        <span class="accent" id="family-name">Kramlems</span><span class="day-pill" id="day-pill"></span>
+        <span class="accent" id="family-name">Kramlems</span>
       </div>
       <div id="cal-today" class="cal-block"></div>
       <div id="cal-upcoming" class="cal-block"></div>
@@ -456,20 +442,6 @@ function tick() {
     h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
 
   document.getElementById('family-name').textContent = C.familyName;
-
-  const dow = now.getDay();
-  const pill = document.getElementById('day-pill');
-  if (dow === 0 || dow === 6) {
-    pill.className = 'day-pill weekend';
-    pill.textContent = 'Weekend';
-    pill.hidden = false;
-  } else if (C.schoolDays.includes(dow)) {
-    pill.hidden = true;
-  } else {
-    pill.className = 'day-pill holiday';
-    pill.textContent = 'No school';
-    pill.hidden = false;
-  }
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
