@@ -55,30 +55,36 @@ module.exports = async (req, res) => {
     // Restrict explicitly to the named folder — Files.Read allows broader access,
     // so we always use the specific folder path rather than a root search.
     const folderEncoded = folder.split('/').map(encodeURIComponent).join('/');
-    const apiUrl =
+    let nextUrl =
       `${GRAPH}/me/drive/root:/${folderEncoded}:/children` +
-      `?$select=name,file&$expand=thumbnails($select=large)`;
+      `?$select=name,file&$expand=thumbnails($select=large)&$top=1000`;
 
-    const r = await fetch(apiUrl, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept:        'application/json',
-      },
-      signal: AbortSignal.timeout(10000),
-    });
+    const photos = [];
+    const debugPages = [];
 
-    const body = await r.json();
+    while (nextUrl && photos.length < 2000) {
+      const r = await fetch(nextUrl, {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+        signal: AbortSignal.timeout(10000),
+      });
+      const body = await r.json();
 
-    if (req.query.debug === '1') {
-      return res.status(200).json({ status: r.status, folder, body });
+      if (req.query.debug === '1') debugPages.push({ status: r.status, body });
+      if (!r.ok) throw new Error(`Graph API ${r.status}: ${body.error?.message || JSON.stringify(body)}`);
+
+      (body.value || [])
+        .filter(item => item.file && /^image\//i.test(item.file.mimeType))
+        .forEach(item => {
+          const url = item.thumbnails?.[0]?.large?.url;
+          if (url) photos.push(url);
+        });
+
+      nextUrl = body['@odata.nextLink'] || null;
     }
 
-    if (!r.ok) throw new Error(`Graph API ${r.status}: ${body.error?.message || JSON.stringify(body)}`);
-
-    const photos = (body.value || [])
-      .filter(item => item.file && /^image\//i.test(item.file.mimeType))
-      .map(item => item.thumbnails?.[0]?.large?.url)
-      .filter(Boolean);
+    if (req.query.debug === '1') {
+      return res.status(200).json({ folder, total: photos.length, pages: debugPages });
+    }
 
     res.status(200).json({ photos });
   } catch (err) {
