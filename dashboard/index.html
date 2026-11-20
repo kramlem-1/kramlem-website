@@ -492,17 +492,16 @@ function renderCalendar(events) {
   const todayEl    = document.getElementById('cal-today');
   const upcomingEl = document.getElementById('cal-upcoming');
 
-  todayEl.innerHTML = '<div class="cal-block-label">Today</div>' + (
-    todayEvs.length
-      ? todayEvs.map(e => `
+  todayEl.style.display = todayEvs.length ? '' : 'none';
+  todayEl.innerHTML = todayEvs.length
+    ? '<div class="cal-block-label">Today</div>' + todayEvs.map(e => `
           <div class="cal-event">
             <div class="cal-event-name">${e.summary}</div>
             <div class="cal-event-meta">${fmtTimeRange(e.start, e.end, e.allDay)}</div>
             ${e.location ? `<div class="cal-event-loc">📍 ${e.location}</div>` : ''}
           </div>`)
         .join('')
-      : '<div class="cal-nothing">Nothing on today</div>'
-  );
+    : '';
 
   upcomingEl.innerHTML = upcomingEvs.length
     ? '<div class="cal-block-label">Coming up</div>' +
