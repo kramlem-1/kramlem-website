@@ -114,7 +114,6 @@
       text-align: center;
       gap: 1.2vh;
     }
-    .wotd-label { font-size: 1.4vh; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dim); margin-bottom: 1vh; }
     .wotd-word  { font-family: var(--font-d); font-size: 6vh; font-weight: 300; color: var(--text); overflow-wrap: anywhere; }
     .wotd-meta  { display: flex; gap: 1vw; align-items: baseline; justify-content: center; }
     .wotd-phon  { font-size: 2.2vh; color: var(--dim); }
@@ -428,7 +427,6 @@
         <div class="cd-date" id="cd-date"></div>
       </div>
       <div class="wotd" id="wotd">
-        <span class="wotd-label">Word of the Day</span>
         <span class="wotd-word" id="wotd-word">—</span>
         <div class="wotd-meta">
           <span class="wotd-phon" id="wotd-phon"></span>
@@ -745,7 +743,7 @@ function tickCountdown() {
 
   // No upcoming trip (none set, or it has already left): show Word of the Day instead
   const hasTrip = !!C.holidayDate && diff > 0;
-  document.getElementById('cp-label').style.display = hasTrip ? '' : 'none';
+  document.getElementById('cp-label').textContent   = hasTrip ? 'Next Adventure' : 'Word of the Day';
   document.getElementById('cd-body').style.display  = hasTrip ? '' : 'none';
   document.getElementById('wotd').style.display     = hasTrip ? 'none' : '';
   if (!hasTrip) return;
