@@ -43,7 +43,8 @@
       width: 100vw;
       height: 100vh;
       display: grid;
-      grid-template-rows: 2fr 3fr auto;
+      grid-template-rows: 28% minmax(0, 1fr);
+      padding: 1.5vh 1.5vw;
       position: relative;
       z-index: 2;
       text-shadow: 0 1px 4px rgba(0,0,0,0.6);
@@ -70,7 +71,7 @@
 
     .clock {
       font-family: var(--font-d);
-      font-size: 21vh;
+      font-size: 17vh;
       font-weight: 300;
       line-height: 1;
       letter-spacing: -0.02em;
@@ -86,11 +87,13 @@
     /* ── PANELS ── */
     .panels {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 28fr 44fr 28fr;
+      min-height: 0;
     }
 
     .panel {
-      padding: 3vh 4vw;
+      padding: 2.5vh 2vw;
+      min-height: 0;
       border-right: 1px solid var(--border);
       overflow: hidden;
     }
@@ -99,19 +102,22 @@
     /* ── WORD OF THE DAY ── */
     .wotd {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 1.8vw;
-      padding: 2vh 4vw;
+      text-align: center;
+      gap: 0.5vh;
+      padding-top: 2vh;
       border-top: 1px solid var(--border);
-      flex-wrap: wrap;
-      min-height: 7vh;
     }
-    .wotd-label { font-size: 1.4vh; letter-spacing: 0.15em; text-transform: uppercase; color: var(--dim); white-space: nowrap; }
-    .wotd-word  { font-family: var(--font-d); font-size: 3.2vh; color: var(--text); white-space: nowrap; }
-    .wotd-phon  { font-size: 2vh; color: var(--dim); white-space: nowrap; }
-    .wotd-pos   { font-size: 1.8vh; letter-spacing: 0.08em; text-transform: uppercase; color: var(--warm); white-space: nowrap; }
-    .wotd-def   { font-size: 2vh; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50vw; }
+    .wotd-label { font-size: 1.3vh; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); }
+    .wotd-word  { font-family: var(--font-d); font-size: 3.6vh; color: var(--text); }
+    .wotd-meta  { display: flex; gap: 1vw; align-items: baseline; justify-content: center; }
+    .wotd-phon  { font-size: 1.8vh; color: var(--dim); }
+    .wotd-pos   { font-size: 1.5vh; letter-spacing: 0.08em; text-transform: uppercase; color: var(--warm); }
+    .wotd-def   {
+      font-size: 1.8vh; color: var(--dim); line-height: 1.35;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+    }
 
     .label {
       font-size: 1.2vh;
@@ -316,7 +322,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: rgba(9, 9, 16, 0.70);
+      background: rgba(9, 9, 16, 0.45);
     }
 
     /* Fade transition on the outgoing layer */
@@ -367,7 +373,7 @@
     </div>
 
     <!-- Family -->
-    <div class="panel" style="overflow-y:auto;">
+    <div class="panel">
       <div class="label">Today</div>
       <div class="greeting">
         Good <span id="greeting">morning</span>,
@@ -388,16 +394,17 @@
         <div class="cd-hms" id="cd-hms"></div>
         <div class="cd-date" id="cd-date"></div>
       </div>
+      <div class="wotd" id="wotd">
+        <span class="wotd-label">Word of the Day</span>
+        <span class="wotd-word" id="wotd-word">—</span>
+        <div class="wotd-meta">
+          <span class="wotd-phon" id="wotd-phon"></span>
+          <span class="wotd-pos"  id="wotd-pos"></span>
+        </div>
+        <span class="wotd-def"  id="wotd-def">Loading…</span>
+      </div>
     </div>
 
-  </div>
-
-  <div class="wotd" id="wotd">
-    <span class="wotd-label">Word of the Day</span>
-    <span class="wotd-word" id="wotd-word">—</span>
-    <span class="wotd-phon" id="wotd-phon"></span>
-    <span class="wotd-pos"  id="wotd-pos"></span>
-    <span class="wotd-def"  id="wotd-def">Loading…</span>
   </div>
 
 </div>
@@ -537,6 +544,13 @@ function renderCalendar(events) {
         </div>`)
       .join('')
     : '';
+
+  // Drop trailing upcoming events until the panel fits without scrolling
+  const panel = upcomingEl.closest('.panel');
+  let items = upcomingEl.querySelectorAll('.cal-event');
+  for (let i = items.length - 1; i >= 0 && panel.scrollHeight > panel.clientHeight; i--) {
+    items[i].remove();
+  }
 }
 
 async function fetchCalendar() {
@@ -662,14 +676,10 @@ function tickCountdown() {
 
   if (diff <= 0) {
     // Holiday is today or past
-    const panel = document.getElementById('countdown-panel');
-    panel.innerHTML = `
-      <div class="label">Next Adventure</div>
-      <div class="cd-body">
-        <div class="cd-emoji">🌴</div>
-        <div class="cd-today">It's time!</div>
-        <div class="cd-name">${C.holidayName}</div>
-      </div>
+    document.querySelector('#countdown-panel .cd-body').innerHTML = `
+      <div class="cd-emoji">🌴</div>
+      <div class="cd-today">It's time!</div>
+      <div class="cd-name">${C.holidayName}</div>
     `;
     return;
   }
