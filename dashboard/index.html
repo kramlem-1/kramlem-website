@@ -574,7 +574,7 @@ async function fetchMessages() {
       text.className = 'tv-msg-text';
       from.className = 'tv-msg-from';
       text.textContent = m.text;
-      from.textContent = m.from;
+      from.textContent = 'From ' + m.from;
       box.append(text, from);
       return box;
     }));

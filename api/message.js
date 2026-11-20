@@ -19,8 +19,17 @@ const DEFAULT_SENDERS = [
   'mark@kramlem.com',
   'melanie@kramlem.com',
   'harry@kramlem.com',
+  'harrison@kramlem.com',
   'charlize@kramlem.com',
 ];
+
+const NICKNAMES = {
+  mark:     'Dad',
+  melanie:  'Mum',
+  harry:    'Harry',
+  harrison: 'Harry',
+  charlize: 'Cha Cha',
+};
 
 const sydDay = (ms) => new Date(ms).toLocaleDateString('en-CA', { timeZone: TZ });
 
@@ -103,7 +112,7 @@ module.exports = async (req, res) => {
       const name = from.split('@')[0];
       messages.push({
         text: match[1],
-        from: name.charAt(0).toUpperCase() + name.slice(1),
+        from: NICKNAMES[name] || name.charAt(0).toUpperCase() + name.slice(1),
         at:   sent,
       });
     }
