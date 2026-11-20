@@ -13,7 +13,7 @@
  */
 
 export const config = {
-  matcher: ['/dashboard', '/dashboard/:path*', '/api/calendar'],
+  matcher: ['/dashboard', '/dashboard/:path*', '/api/calendar', '/api/message'],
 };
 
 function getCookie(request, name) {

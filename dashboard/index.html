@@ -195,6 +195,16 @@
     }
     .greeting .accent { color: var(--accent); }
 
+    .tv-msg {
+      border: 1px solid rgba(255,179,71,.35);
+      background: rgba(255,179,71,.10);
+      border-radius: 1.2vh;
+      padding: 1.6vh 1.4vw;
+      margin-bottom: 1.6vh;
+    }
+    .tv-msg-text { font-family: var(--font-d); font-size: 3.2vh; line-height: 1.25; color: var(--text); overflow-wrap: anywhere; }
+    .tv-msg-from { font-size: 1.4vh; letter-spacing: 0.15em; text-transform: uppercase; color: var(--warm); margin-top: 0.8vh; }
+
     .events { display: flex; flex-direction: column; gap: 2.2vh; }
 
     /* ── CALENDAR EVENTS ── */
@@ -365,6 +375,7 @@
         Good <span id="greeting">morning</span>,
         <span class="accent" id="family-name">Kramlems</span>
       </div>
+      <div id="tv-msgs"></div>
       <div id="cal-today" class="cal-block"></div>
       <div id="cal-upcoming" class="cal-block"></div>
     </div>
@@ -473,7 +484,10 @@ function fmtDay(iso) {
   });
 }
 
+let _lastEvents = [];
+
 function renderCalendar(events) {
+  _lastEvents = events;
   const todayStr = sydDate(new Date());
   const now      = new Date();
 
@@ -535,6 +549,38 @@ async function fetchCalendar() {
       '<div class="cal-block-label">Today</div>' +
       '<div class="cal-nothing">Calendar unavailable</div>';
   }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *  FAMILY MESSAGES  (email jarvis@ with subject "TV: your message")
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+let _msgKey = '';
+
+async function fetchMessages() {
+  try {
+    const res = await fetch('/api/message');
+    if (!res.ok) return;
+    const msgs = (await res.json()).messages || [];
+    const key = JSON.stringify(msgs);
+    if (key === _msgKey) return;
+    _msgKey = key;
+
+    const el = document.getElementById('tv-msgs');
+    el.replaceChildren(...msgs.map(m => {
+      const box  = document.createElement('div');
+      const text = document.createElement('div');
+      const from = document.createElement('div');
+      box.className  = 'tv-msg';
+      text.className = 'tv-msg-text';
+      from.className = 'tv-msg-from';
+      text.textContent = m.text;
+      from.textContent = m.from;
+      box.append(text, from);
+      return box;
+    }));
+
+    if (_lastEvents.length) renderCalendar(_lastEvents);
+  } catch {}
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -803,6 +849,9 @@ async function fetchWordOfDay() {
 
 fetchCalendar();
 setInterval(fetchCalendar, C.calendarRefreshMins * 60_000);
+
+fetchMessages();
+setInterval(fetchMessages, 60_000);
 
 fetchWeather();
 setInterval(fetchWeather, C.weatherRefreshMins * 60_000);
