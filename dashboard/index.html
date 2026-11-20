@@ -103,25 +103,6 @@
       overflow: hidden;
     }
 
-    /* ── WORD OF THE DAY ── */
-    .wotd {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 0.5vh;
-      padding-top: 2vh;
-      border-top: 1px solid var(--border);
-    }
-    .wotd-label { font-size: 1.3vh; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); }
-    .wotd-word  { font-family: var(--font-d); font-size: 3.6vh; color: var(--text); }
-    .wotd-meta  { display: flex; gap: 1vw; align-items: baseline; justify-content: center; }
-    .wotd-phon  { font-size: 1.8vh; color: var(--dim); }
-    .wotd-pos   { font-size: 1.5vh; letter-spacing: 0.08em; text-transform: uppercase; color: var(--warm); }
-    .wotd-def   {
-      font-size: 1.8vh; color: var(--dim); line-height: 1.35;
-      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-    }
 
     .label {
       font-size: 1.2vh;
@@ -280,11 +261,11 @@
     .countdown-panel > .label { align-self: flex-start; }
     .cd-body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5vh; flex: 1; }
 
-    .cd-emoji { font-size: 6vh; line-height: 1; }
+    .cd-emoji { font-size: 8vh; line-height: 1; }
 
     .cd-days {
       font-family: var(--font-d);
-      font-size: 14vh;
+      font-size: 19vh;
       font-weight: 300;
       line-height: 1;
       color: var(--warm);
@@ -425,15 +406,6 @@
         <div class="cd-name" id="cd-name">Caribbean</div>
         <div class="cd-hms" id="cd-hms"></div>
         <div class="cd-date" id="cd-date"></div>
-      </div>
-      <div class="wotd" id="wotd">
-        <span class="wotd-label">Word of the Day</span>
-        <span class="wotd-word" id="wotd-word">—</span>
-        <div class="wotd-meta">
-          <span class="wotd-phon" id="wotd-phon"></span>
-          <span class="wotd-pos"  id="wotd-pos"></span>
-        </div>
-        <span class="wotd-def"  id="wotd-def">Loading…</span>
       </div>
     </div>
 
@@ -868,46 +840,6 @@ tick();
 tickCountdown();
 setInterval(() => { tick(); tickCountdown(); }, 1000);
 
-const WOTD_LIST = [
-  'serendipity','ephemeral','mellifluous','petrichor','vellichor','lacuna',
-  'liminal','ineffable','sonder','limerence','sanguine','obstreperous',
-  'loquacious','perspicacious','obsequious','recalcitrant','ebullient',
-  'truculent','magnanimous','insouciant','equanimity','perfidious',
-  'prodigious','vicarious','penultimate','zeitgeist','schadenfreude',
-  'wanderlust','doppelganger','angst','kindergarten','schadenfreude',
-  'quixotic','sycophant','ephemeral','perfunctory','nefarious','propitious',
-  'lethargic','ostentatious','tenacious','vociferous','gregarious','fastidious',
-  'idiosyncratic','serendipitous','benevolent','superfluous','ambiguous',
-  'clandestine','enigmatic','euphoric','fervent','frugal','garrulous',
-  'hapless','impetuous','judicious','laconic','maudlin','nonchalant',
-  'ominous','pensive','querulous','resilient','stoic','tranquil',
-  'ubiquitous','verbose','whimsical','zealous','altruistic','bellicose',
-  'candid','didactic','erudite','flippant','grandiloquent','hypocritical',
-  'incorrigible','jejune','keen','lugubrious','mercurial','nefarious',
-  'opulent','pragmatic','quintessential','reticent','sagacious','taciturn',
-  'umbrage','venerable','wistful','xenial','youthful','zeal',
-];
-
-async function fetchWordOfDay() {
-  const day = Math.floor(Date.now() / 86_400_000);
-  const word = WOTD_LIST[day % WOTD_LIST.length];
-  document.getElementById('wotd-word').textContent = word;
-  try {
-    const res  = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-    const data = await res.json();
-    const entry   = data[0];
-    const phonetic = entry.phonetics?.find(p => p.text)?.text ?? '';
-    const meaning  = entry.meanings?.[0];
-    const pos      = meaning?.partOfSpeech ?? '';
-    const def      = meaning?.definitions?.[0]?.definition ?? '';
-    document.getElementById('wotd-phon').textContent = phonetic;
-    document.getElementById('wotd-pos').textContent  = pos;
-    document.getElementById('wotd-def').textContent  = def;
-  } catch {
-    document.getElementById('wotd-def').textContent = '';
-  }
-}
-
 fetchCalendar();
 setInterval(fetchCalendar, C.calendarRefreshMins * 60_000);
 
@@ -916,8 +848,6 @@ setInterval(fetchMessages, 60_000);
 
 fetchWeather();
 setInterval(fetchWeather, C.weatherRefreshMins * 60_000);
-
-fetchWordOfDay();
 
 fetchPhotos();
 setInterval(showNextPhoto, 20_000);       // rotate photo every 20 seconds
