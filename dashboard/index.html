@@ -43,7 +43,7 @@
       width: 100vw;
       height: 100vh;
       display: grid;
-      grid-template-rows: 2fr 3fr;
+      grid-template-rows: 2fr 3fr auto;
       position: relative;
       z-index: 2;
       text-shadow: 0 1px 4px rgba(0,0,0,0.6);
@@ -96,6 +96,23 @@
     }
     .panel:last-child { border-right: none; }
 
+    /* ── WORD OF THE DAY ── */
+    .wotd {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.8vw;
+      padding: 2vh 4vw;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+      min-height: 7vh;
+    }
+    .wotd-label { font-size: 1.4vh; letter-spacing: 0.15em; text-transform: uppercase; color: var(--dim); white-space: nowrap; }
+    .wotd-word  { font-family: var(--font-d); font-size: 3.2vh; color: var(--text); white-space: nowrap; }
+    .wotd-phon  { font-size: 2vh; color: var(--dim); white-space: nowrap; }
+    .wotd-pos   { font-size: 1.8vh; letter-spacing: 0.08em; text-transform: uppercase; color: var(--warm); white-space: nowrap; }
+    .wotd-def   { font-size: 2vh; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50vw; }
+
     .label {
       font-size: 1.2vh;
       font-weight: 500;
@@ -108,9 +125,15 @@
     /* ── WEATHER ── */
     .wx-row {
       display: flex;
-      align-items: flex-start;
-      gap: 2.5vw;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5vh;
       margin-bottom: 2.5vh;
+    }
+    .wx-main {
+      display: flex;
+      align-items: center;
+      gap: 2vw;
     }
 
     .wx-icon  { font-size: 7vh; line-height: 1; flex-shrink: 0; }
@@ -124,39 +147,36 @@
     }
     .wx-temp sup { font-size: 0.38em; color: var(--dim); vertical-align: 0.55em; }
 
-    .wx-desc { font-size: 2vh; color: var(--dim); margin-top: 0.4vh; }
+    .wx-desc { font-size: 2vh; color: var(--dim); margin-top: 0.2vh; text-align: center; }
 
+    .wx-stats,
+    .wx-forecast {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      row-gap: 0.6vh;
+    }
     .wx-stats {
-      display: flex;
-      gap: 2.8vw;
+      margin-top: 2.2vh;
       padding-top: 2.2vh;
       border-top: 1px solid var(--border);
     }
+    .wx-stats > *, .wx-forecast > * { text-align: center; }
+    .wx-stats > *:not(:nth-child(5n)),
+    .wx-forecast > *:not(:nth-child(5n)) { border-right: 1px solid var(--border); }
 
-    .stat { display: flex; flex-direction: column; gap: 0.3vh; }
-    .stat-l { font-size: 1.1vh; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
-    .stat-v { font-family: var(--font-d); font-size: 2.5vh; font-variant-numeric: tabular-nums; }
-
-    .forecast {
-      display: flex;
-      gap: 1.5vw;
-      margin-top: 2.5vh;
-      padding-top: 2.2vh;
-      border-top: 1px solid var(--border);
+    .wx-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0.8vh 0;
     }
 
-    .fc-day {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5vh;
-    }
+    .stat-l { font-size: 1.1vh; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); white-space: nowrap; }
+    .stat-v { font-family: var(--font-d); font-size: 2.5vh; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
     .fc-name  { font-size: 1.1vh; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
-    .fc-icon  { font-size: 2.6vh; }
-    .fc-temps { font-size: 1.7vh; font-variant-numeric: tabular-nums; }
+    .fc-icon  { font-size: 2.6vh; line-height: 1; }
+    .fc-temps { display: flex; flex-direction: column; align-items: center; gap: 0.1vh; font-size: 1.7vh; font-variant-numeric: tabular-nums; }
     .fc-hi    { color: var(--warm); }
-    .fc-sep   { color: var(--border); }
     .fc-lo    { color: var(--dim); }
 
     /* ── FAMILY ── */
@@ -218,11 +238,10 @@
     .countdown-panel {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
       text-align: center;
-      gap: 1.5vh;
     }
+    .countdown-panel > .label { align-self: flex-start; }
+    .cd-body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5vh; flex: 1; }
 
     .cd-emoji { font-size: 6vh; line-height: 1; }
 
@@ -336,39 +355,15 @@
     <div class="panel">
       <div class="label" id="wx-label">Weather — Sydney</div>
       <div class="wx-row">
-        <div class="wx-icon" id="wx-icon">⛅</div>
-        <div>
+        <div class="wx-main">
+          <div class="wx-icon" id="wx-icon">⛅</div>
           <div class="wx-temp"><span id="wx-temp">—</span><sup>°C</sup></div>
-          <div class="wx-desc" id="wx-desc">Loading…</div>
         </div>
+        <div class="wx-desc" id="wx-desc">Loading…</div>
       </div>
-      <div class="wx-stats">
-        <div class="stat">
-          <span class="stat-l">Feels like</span>
-          <span class="stat-v" id="wx-feels">—°</span>
-        </div>
-        <div class="stat">
-          <span class="stat-l">High</span>
-          <span class="stat-v" id="wx-high" style="color:var(--warm)">—°</span>
-        </div>
-        <div class="stat">
-          <span class="stat-l">Low</span>
-          <span class="stat-v" id="wx-low">—°</span>
-        </div>
-        <div class="stat">
-          <span class="stat-l">Humidity</span>
-          <span class="stat-v" id="wx-hum">—%</span>
-        </div>
-        <div class="stat">
-          <span class="stat-l">Sunrise</span>
-          <span class="stat-v" id="wx-rise" style="color:var(--warm)">—</span>
-        </div>
-        <div class="stat">
-          <span class="stat-l">Sunset</span>
-          <span class="stat-v" id="wx-set">—</span>
-        </div>
-      </div>
-      <div class="forecast" id="forecast"></div>
+      <div class="wx-stats" id="wx-stats"></div>
+      <div class="wx-divider"></div>
+      <div class="wx-forecast" id="wx-forecast"></div>
     </div>
 
     <!-- Family -->
@@ -384,15 +379,27 @@
 
     <!-- Countdown -->
     <div class="panel countdown-panel" id="countdown-panel">
-      <div class="cd-emoji">🌴</div>
-      <div class="cd-days" id="cd-days">—</div>
-      <div class="cd-unit" id="cd-unit">days to go</div>
-      <div class="cd-name" id="cd-name">Caribbean</div>
-      <div class="cd-hms" id="cd-hms"></div>
-      <div class="cd-date" id="cd-date"></div>
+      <div class="label">Next Adventure</div>
+      <div class="cd-body">
+        <div class="cd-emoji">🌴</div>
+        <div class="cd-days" id="cd-days">—</div>
+        <div class="cd-unit" id="cd-unit">days to go</div>
+        <div class="cd-name" id="cd-name">Caribbean</div>
+        <div class="cd-hms" id="cd-hms"></div>
+        <div class="cd-date" id="cd-date"></div>
+      </div>
     </div>
 
   </div>
+
+  <div class="wotd" id="wotd">
+    <span class="wotd-label">Word of the Day</span>
+    <span class="wotd-word" id="wotd-word">—</span>
+    <span class="wotd-phon" id="wotd-phon"></span>
+    <span class="wotd-pos"  id="wotd-pos"></span>
+    <span class="wotd-def"  id="wotd-def">Loading…</span>
+  </div>
+
 </div>
 
 <div id="status">—</div>
@@ -403,6 +410,8 @@
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 const C = {
   city:       'Sydney',
+  lat:        -33.8688,
+  lon:        151.2093,
   familyName: 'Kramlems',
   timeZone:   'Australia/Sydney',
 
@@ -413,8 +422,9 @@ const C = {
   calendarRefreshMins: 15,
   pageRefreshMins:     60,
 
-  /* Caribbean holiday countdown */
+  /* Caribbean holiday countdown — set holidayTime to actual departure time */
   holidayDate: '2026-12-11',
+  holidayTime: '06:55',
   holidayName: 'Caribbean',
 };
 
@@ -445,12 +455,13 @@ function tick() {
   if (dow === 0 || dow === 6) {
     pill.className = 'day-pill weekend';
     pill.textContent = 'Weekend';
+    pill.hidden = false;
   } else if (C.schoolDays.includes(dow)) {
-    pill.className = 'day-pill school';
-    pill.textContent = 'School day';
+    pill.hidden = true;
   } else {
     pill.className = 'day-pill holiday';
     pill.textContent = 'No school';
+    pill.hidden = false;
   }
 }
 
@@ -544,59 +555,85 @@ async function fetchCalendar() {
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  *  WEATHER
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-function wxIcon(code) {
-  code = +code;
-  if (code === 113) return '☀️';
-  if (code <= 116)  return '⛅';
-  if (code <= 119)  return '☁️';
-  if (code <= 143)  return '🌫️';
-  if (code <= 176)  return '🌦️';
-  if (code <= 179)  return '🌨️';
-  if (code <= 185)  return '🌧️';
-  if (code <= 200)  return '⛈️';
-  if (code <= 230)  return '❄️';
-  if (code <= 260)  return '🌫️';
-  if (code <= 299)  return '🌦️';
-  if (code <= 320)  return '🌧️';
-  if (code <= 335)  return '🌨️';
-  if (code <= 395)  return '⛈️';
+function wmoIcon(code) {
+  if (code === 0)  return '☀️';
+  if (code <= 2)   return '⛅';
+  if (code === 3)  return '☁️';
+  if (code <= 48)  return '🌫️';
+  if (code <= 55)  return '🌦️';
+  if (code <= 65)  return '🌧️';
+  if (code <= 77)  return '❄️';
+  if (code <= 82)  return '🌦️';
+  if (code <= 86)  return '🌨️';
+  if (code <= 99)  return '⛈️';
   return '🌡️';
+}
+
+function wmoDesc(code) {
+  if (code === 0)  return 'Clear sky';
+  if (code === 1)  return 'Mainly clear';
+  if (code === 2)  return 'Partly cloudy';
+  if (code === 3)  return 'Overcast';
+  if (code <= 48)  return 'Foggy';
+  if (code <= 55)  return 'Drizzle';
+  if (code <= 65)  return 'Rainy';
+  if (code <= 77)  return 'Snowy';
+  if (code <= 82)  return 'Rain showers';
+  if (code <= 86)  return 'Snow showers';
+  if (code <= 99)  return 'Thunderstorm';
+  return 'Unknown';
 }
 
 async function fetchWeather() {
   document.getElementById('wx-label').textContent = `Weather — ${C.city}`;
   try {
-    const res  = await fetch(`https://wttr.in/${encodeURIComponent(C.city)}?format=j1`);
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${C.lat}&longitude=${C.lon}` +
+      `&current=temperature_2m,apparent_temperature,weather_code,relative_humidity_2m` +
+      `&daily=weather_code,temperature_2m_max,temperature_2m_min,sunset` +
+      `&timezone=${encodeURIComponent(C.timeZone)}&forecast_days=7`;
+    const res  = await fetch(url);
     if (!res.ok) throw new Error(res.status);
     const data = await res.json();
-    const cur   = data.current_condition[0];
-    const today = data.weather[0];
-    const days  = data.weather.slice(0, 3);
+    const cur   = data.current;
+    const daily = data.daily;
 
-    document.getElementById('wx-icon').textContent  = wxIcon(cur.weatherCode);
-    document.getElementById('wx-temp').textContent  = cur.temp_C;
-    document.getElementById('wx-desc').textContent  = cur.weatherDesc[0].value;
-    document.getElementById('wx-feels').textContent = cur.FeelsLikeC + '°';
-    document.getElementById('wx-high').textContent  = today.maxtempC + '°';
-    document.getElementById('wx-low').textContent   = today.mintempC + '°';
-    document.getElementById('wx-hum').textContent   = cur.humidity + '%';
+    document.getElementById('wx-icon').textContent = wmoIcon(cur.weather_code);
+    document.getElementById('wx-temp').textContent = Math.round(cur.temperature_2m);
+    document.getElementById('wx-desc').textContent = wmoDesc(cur.weather_code);
 
-    const fmt = s => s.replace(/ AM$/,'am').replace(/ PM$/,'pm');
-    document.getElementById('wx-rise').textContent = fmt(today.astronomy[0].sunrise);
-    document.getElementById('wx-set').textContent  = fmt(today.astronomy[0].sunset);
+    const sunsetTime = new Date(daily.sunset[0]).toLocaleTimeString('en-AU', {
+      hour: 'numeric', minute: '2-digit', hour12: true, timeZone: C.timeZone
+    }).toLowerCase().replace(' am', 'am').replace(' pm', 'pm');
+
+    const stats = [
+      { label: 'Feels like', value: Math.round(cur.apparent_temperature) + '°',         color: '' },
+      { label: 'High',       value: Math.round(daily.temperature_2m_max[0]) + '°',      color: 'var(--warm)' },
+      { label: 'Low',        value: Math.round(daily.temperature_2m_min[0]) + '°',      color: '' },
+      { label: 'Humidity',   value: cur.relative_humidity_2m + '%',                      color: '' },
+      { label: 'Sunset',     value: sunsetTime,                                           color: 'var(--warm)' },
+    ];
 
     const DAY = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    document.getElementById('forecast').innerHTML = days.map((d, i) => {
-      const name = i === 0 ? 'Today' : DAY[new Date(d.date).getDay()];
-      const mid  = d.hourly[Math.floor(d.hourly.length / 2)];
-      return `<div class="fc-day">
-        <span class="fc-name">${name}</span>
-        <span class="fc-icon">${wxIcon(mid?.weatherCode ?? 113)}</span>
-        <span class="fc-temps">
-          <span class="fc-hi">${d.maxtempC}°</span><span class="fc-sep"> / </span><span class="fc-lo">${d.mintempC}°</span>
-        </span>
-      </div>`;
-    }).join('');
+    const forecast = Array.from({length: 5}, (_, i) => {
+      const idx = i + 1;
+      return {
+        name: DAY[new Date(daily.time[idx] + 'T12:00:00').getDay()],
+        icon: wmoIcon(daily.weather_code[idx]),
+        hi:   Math.round(daily.temperature_2m_max[idx]),
+        lo:   Math.round(daily.temperature_2m_min[idx]),
+      };
+    });
+
+    document.getElementById('wx-stats').innerHTML = [
+      ...stats.map(s => `<span class="stat-l">${s.label}</span>`),
+      ...stats.map(s => `<span class="stat-v"${s.color ? ` style="color:${s.color}"` : ''}>${s.value}</span>`),
+    ].join('');
+
+    document.getElementById('wx-forecast').innerHTML = [
+      ...forecast.map(d => `<span class="fc-name">${d.name}</span>`),
+      ...forecast.map(d => `<span class="fc-icon">${d.icon}</span>`),
+      ...forecast.map(d => `<span class="fc-temps"><span class="fc-hi">${d.hi}°</span><span class="fc-lo">${d.lo}°</span></span>`),
+    ].join('');
 
     document.getElementById('status').textContent =
       'Updated ' + new Date().toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit', hour12:false });
@@ -609,7 +646,7 @@ async function fetchWeather() {
  *  COUNTDOWN
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 function tickCountdown() {
-  const target = new Date(C.holidayDate + 'T00:00:00');
+  const target = new Date(C.holidayDate + 'T' + C.holidayTime + ':00+11:00');
   const now    = new Date();
   const diff   = target - now;
 
@@ -627,9 +664,12 @@ function tickCountdown() {
     // Holiday is today or past
     const panel = document.getElementById('countdown-panel');
     panel.innerHTML = `
-      <div class="cd-emoji">🌴</div>
-      <div class="cd-today">It's time!</div>
-      <div class="cd-name">${C.holidayName}</div>
+      <div class="label">Next Adventure</div>
+      <div class="cd-body">
+        <div class="cd-emoji">🌴</div>
+        <div class="cd-today">It's time!</div>
+        <div class="cd-name">${C.holidayName}</div>
+      </div>
     `;
     return;
   }
@@ -686,7 +726,11 @@ async function showNextPhoto() {
   const bg   = document.getElementById('photo-bg');
   const next = document.getElementById('photo-bg-next');
 
-  _photoIdx = (_photoIdx + 1) % _photos.length;
+  _photoIdx++;
+  if (_photoIdx >= _photos.length) {
+    _photos = shuffle(_photos);
+    _photoIdx = 0;
+  }
   const url = _photos[_photoIdx];
 
   // Preload into the back layer
@@ -734,14 +778,57 @@ tick();
 tickCountdown();
 setInterval(() => { tick(); tickCountdown(); }, 1000);
 
+const WOTD_LIST = [
+  'serendipity','ephemeral','mellifluous','petrichor','vellichor','lacuna',
+  'liminal','ineffable','sonder','limerence','sanguine','obstreperous',
+  'loquacious','perspicacious','obsequious','recalcitrant','ebullient',
+  'truculent','magnanimous','insouciant','equanimity','perfidious',
+  'prodigious','vicarious','penultimate','zeitgeist','schadenfreude',
+  'wanderlust','doppelganger','angst','kindergarten','schadenfreude',
+  'quixotic','sycophant','ephemeral','perfunctory','nefarious','propitious',
+  'lethargic','ostentatious','tenacious','vociferous','gregarious','fastidious',
+  'idiosyncratic','serendipitous','benevolent','superfluous','ambiguous',
+  'clandestine','enigmatic','euphoric','fervent','frugal','garrulous',
+  'hapless','impetuous','judicious','laconic','maudlin','nonchalant',
+  'ominous','pensive','querulous','resilient','stoic','tranquil',
+  'ubiquitous','verbose','whimsical','zealous','altruistic','bellicose',
+  'candid','didactic','erudite','flippant','grandiloquent','hypocritical',
+  'incorrigible','jejune','keen','lugubrious','mercurial','nefarious',
+  'opulent','pragmatic','quintessential','reticent','sagacious','taciturn',
+  'umbrage','venerable','wistful','xenial','youthful','zeal',
+];
+
+async function fetchWordOfDay() {
+  const day = Math.floor(Date.now() / 86_400_000);
+  const word = WOTD_LIST[day % WOTD_LIST.length];
+  document.getElementById('wotd-word').textContent = word;
+  try {
+    const res  = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+    const data = await res.json();
+    const entry   = data[0];
+    const phonetic = entry.phonetics?.find(p => p.text)?.text ?? '';
+    const meaning  = entry.meanings?.[0];
+    const pos      = meaning?.partOfSpeech ?? '';
+    const def      = meaning?.definitions?.[0]?.definition ?? '';
+    document.getElementById('wotd-phon').textContent = phonetic;
+    document.getElementById('wotd-pos').textContent  = pos;
+    document.getElementById('wotd-def').textContent  = def;
+  } catch {
+    document.getElementById('wotd-def').textContent = '';
+  }
+}
+
 fetchCalendar();
 setInterval(fetchCalendar, C.calendarRefreshMins * 60_000);
 
 fetchWeather();
 setInterval(fetchWeather, C.weatherRefreshMins * 60_000);
 
+fetchWordOfDay();
+
 fetchPhotos();
-setInterval(showNextPhoto, 20_000); // rotate photo every 20 seconds
+setInterval(showNextPhoto, 20_000);       // rotate photo every 20 seconds
+setInterval(fetchPhotos,   25 * 60_000);  // refresh URLs every 25 min before they expire
 
 setTimeout(() => location.reload(), C.pageRefreshMins * 60_000);
 </script>
