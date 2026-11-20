@@ -291,6 +291,21 @@
       font-variant-numeric: tabular-nums;
     }
 
+    .cd-flip { animation: cdFlip 0.5s ease; }
+    @keyframes cdFlip { from { opacity: 0; transform: translateY(1.2vh); } to { opacity: 1; transform: none; } }
+
+    .cd-note { font-family: var(--font-d); font-size: 2.6vh; color: var(--warm); min-height: 0; }
+    .cd-wx   { font-size: 2vh; color: var(--dim); text-align: center; margin-top: 0.5vh; }
+
+    .countdown-panel.final-day {
+      border-color: rgba(255, 179, 71, 0.55);
+      animation: finalGlow 3s ease-in-out infinite;
+    }
+    @keyframes finalGlow {
+      0%, 100% { box-shadow: 0 0 2vh rgba(255, 179, 71, 0.25), inset 0 0 4vh rgba(255, 179, 71, 0.08); }
+      50%      { box-shadow: 0 0 5vh rgba(255, 179, 71, 0.55), inset 0 0 7vh rgba(255, 179, 71, 0.18); }
+    }
+
     .cd-unit {
       font-size: 1.8vh;
       font-weight: 500;
@@ -425,6 +440,8 @@
         <div class="cd-name" id="cd-name">Caribbean</div>
         <div class="cd-hms" id="cd-hms"></div>
         <div class="cd-date" id="cd-date"></div>
+        <div class="cd-note" id="cd-note"></div>
+        <div class="cd-wx" id="cd-wx"></div>
       </div>
       <div class="wotd" id="wotd">
         <span class="wotd-word" id="wotd-word">—</span>
@@ -464,6 +481,14 @@ const C = {
   holidayDate: '2026-12-11',
   holidayTime: '06:55',
   holidayName: 'Caribbean',
+
+  /* Places whose current weather rotates under the countdown */
+  tripPlaces: [
+    { name: 'Orlando',    lat: 28.5383, lon: -81.3792 },
+    { name: 'Miami',      lat: 25.7617, lon: -80.1918 },
+    { name: 'Ocho Rios',  lat: 18.4074, lon: -77.1031 },
+    { name: 'St Maarten', lat: 18.0237, lon: -63.0458 },
+  ],
 };
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -764,24 +789,141 @@ function tickCountdown() {
   const mins  = Math.floor((totalSecs % 3600) / 60);
   const secs  = totalSecs % 60;
 
-  const unitEl = document.getElementById('cd-unit');
+  const unitEl  = document.getElementById('cd-unit');
+  const noteEl  = document.getElementById('cd-note');
+  const panelEl = document.getElementById('countdown-panel');
+  const slot    = Math.floor(now / CD_ROTATE_MS);
+  const plural  = (v, one, many) => (v === 1 ? one : many);
 
   if (diff < 86_400_000) {
-    // Final 24 hours: whole hours plus HH:MM:SS
+    // Final 24 hours: warm glow, whole hours plus HH:MM:SS, confetti every 15 min
     const h = Math.floor(totalSecs / 3600);
+    panelEl.classList.add('final-day');
     daysEl.textContent = h;
-    unitEl.textContent = (h === 1 ? 'hour' : 'hours') + ' to go';
+    unitEl.textContent = plural(h, 'hour', 'hours') + ' to go';
     hmsEl.textContent =
       String(h).padStart(2,'0')    + ':' +
       String(mins).padStart(2,'0') + ':' +
       String(secs).padStart(2,'0');
+    noteEl.textContent = h >= 12 ? 'We fly tomorrow!' : 'Wheels up at ' + clock12(C.holidayTime);
+    maybeConfetti(now);
   } else {
     // Calendar days in Sydney, so it matches counting days on a calendar
-    const n = Math.round((Date.parse(C.holidayDate) - Date.parse(sydDate(now))) / 86_400_000);
-    daysEl.textContent = n;
-    unitEl.textContent = (n === 1 ? 'day' : 'days') + ' to go';
-    hmsEl.textContent = '';
+    panelEl.classList.remove('final-day');
+    noteEl.textContent = '';
+    hmsEl.textContent  = '';
+
+    const todayStr = sydDate(now);
+    const n  = Math.round((Date.parse(C.holidayDate) - Date.parse(todayStr)) / 86_400_000);
+    const wk = weekendsLeft(todayStr);
+    const hrs = Math.floor(diff / 3_600_000);
+
+    const units = [
+      { key: 'days',   value: n,  label: plural(n, 'day', 'days') },
+      { key: 'sleeps', value: n,  label: plural(n, 'sleep', 'sleeps') },
+    ];
+    if (wk > 0) units.push({ key: 'weekends', value: wk, label: plural(wk, 'weekend', 'weekends') });
+    units.push({ key: 'hours', value: hrs.toLocaleString('en-AU'), label: plural(hrs, 'hour', 'hours') });
+
+    const u = units[slot % units.length];
+    daysEl.textContent = u.value;
+    unitEl.textContent = u.label + ' to go';
+    if (u.key !== _cdMode) { _cdMode = u.key; flip(daysEl); flip(unitEl); }
   }
+
+  // Weather at the places we're going, rotating alongside the units
+  const wxEl = document.getElementById('cd-wx');
+  if (_tripWx.length) {
+    const w = _tripWx[slot % _tripWx.length];
+    wxEl.textContent = wmoIcon(w.code) + ' ' + w.name + ' right now: ' + w.temp + '° · ' + wmoDesc(w.code);
+    if (w.name !== _wxName) { _wxName = w.name; flip(wxEl); }
+  }
+}
+
+const CD_ROTATE_MS = 8_000;
+let _cdMode = '';
+let _wxName = '';
+let _tripWx = [];
+let _confettiSlot = null;
+
+function flip(el) {
+  el.classList.remove('cd-flip');
+  void el.offsetWidth;
+  el.classList.add('cd-flip');
+}
+
+function clock12(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number);
+  return ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + (h < 12 ? 'am' : 'pm');
+}
+
+// Saturdays from today (Sydney) up to, not including, the departure date
+function weekendsLeft(todayStr) {
+  let n = 0;
+  for (let t = Date.parse(todayStr); t < Date.parse(C.holidayDate); t += 86_400_000) {
+    if (new Date(t).getUTCDay() === 6) n++;
+  }
+  return n;
+}
+
+async function fetchTripWeather() {
+  try {
+    const places = C.tripPlaces;
+    const url = 'https://api.open-meteo.com/v1/forecast' +
+      '?latitude='  + places.map(p => p.lat).join(',') +
+      '&longitude=' + places.map(p => p.lon).join(',') +
+      '&current=temperature_2m,weather_code&timezone=auto';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    const list = Array.isArray(data) ? data : [data];
+    _tripWx = list.map((d, i) => ({
+      name: places[i].name,
+      temp: Math.round(d.current.temperature_2m),
+      code: d.current.weather_code,
+    }));
+  } catch {}
+}
+
+function maybeConfetti(now) {
+  const slot = Math.floor(now / 900_000);
+  if (slot === _confettiSlot) return;
+  _confettiSlot = slot;
+  confettiBurst();
+}
+
+function confettiBurst() {
+  const cv = document.createElement('canvas');
+  cv.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:9';
+  cv.width = window.innerWidth;
+  cv.height = window.innerHeight;
+  document.body.appendChild(cv);
+  const ctx = cv.getContext('2d');
+  const colors = ['#ffb347', '#7c9eff', '#4ecdc4', '#ff6b9d', '#ffffff'];
+  const bits = Array.from({ length: 140 }, () => ({
+    x: Math.random() * cv.width,
+    y: -20 - Math.random() * cv.height * 0.4,
+    vx: (Math.random() - 0.5) * 3,
+    vy: 2 + Math.random() * 4,
+    s: 6 + Math.random() * 8,
+    r: Math.random() * 6,
+    vr: (Math.random() - 0.5) * 0.3,
+    c: colors[Math.floor(Math.random() * colors.length)],
+  }));
+  let frames = 0;
+  (function step() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for (const p of bits) {
+      p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.r);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2);
+      ctx.restore();
+    }
+    if (++frames < 360) requestAnimationFrame(step); else cv.remove();
+  })();
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -912,6 +1054,9 @@ setInterval(fetchMessages, 60_000);
 
 fetchWeather();
 setInterval(fetchWeather, C.weatherRefreshMins * 60_000);
+
+fetchTripWeather();
+setInterval(fetchTripWeather, C.weatherRefreshMins * 60_000);
 
 fetchWordOfDay();
 
