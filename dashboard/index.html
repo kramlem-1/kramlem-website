@@ -95,10 +95,19 @@
     .panel {
       padding: 2.5vh 2vw;
       min-height: 0;
-      background: rgba(56, 62, 96, 0.48);
-      -webkit-backdrop-filter: blur(0.5vh);
-      backdrop-filter: blur(0.5vh);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      /* Liquid glass: specular highlight, diagonal sheen, tinted base, saturated frosted backdrop */
+      background:
+        radial-gradient(120% 55% at 12% 0%, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0) 60%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 45%, rgba(255, 255, 255, 0.10) 100%),
+        rgba(40, 46, 80, 0.34);
+      -webkit-backdrop-filter: blur(0.8vh) saturate(170%) brightness(1.08);
+      backdrop-filter: blur(0.8vh) saturate(170%) brightness(1.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow:
+        inset 0 0.2vh 0 rgba(255, 255, 255, 0.5),
+        inset 0 -0.15vh 0 rgba(255, 255, 255, 0.1),
+        inset 0 0 3vh rgba(255, 255, 255, 0.07),
+        0 1.4vh 3.5vh rgba(0, 0, 0, 0.38);
       border-radius: 3.2vh;
       overflow: hidden;
     }
@@ -127,7 +136,7 @@
       font-size: 1.8vh;
       font-weight: 500;
       letter-spacing: 0.03em;
-      color: var(--dim);
+      color: rgba(236, 238, 255, 0.85);
       margin-bottom: 2.2vh;
     }
 
@@ -248,7 +257,7 @@
       font-size: 1.6vh;
       font-weight: 500;
       letter-spacing: 0.03em;
-      color: var(--dim);
+      color: rgba(236, 238, 255, 0.8);
       margin-bottom: 1.2vh;
     }
 
