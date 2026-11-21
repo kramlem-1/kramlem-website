@@ -97,17 +97,17 @@
       min-height: 0;
       /* Liquid glass: specular highlight, diagonal sheen, tinted base, saturated frosted backdrop */
       background:
-        radial-gradient(120% 55% at 12% 0%, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0) 60%),
-        linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 45%, rgba(255, 255, 255, 0.10) 100%),
-        rgba(40, 46, 80, 0.34);
+        radial-gradient(120% 55% at 12% 0%, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 60%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 45%, rgba(255, 255, 255, 0.05) 100%),
+        rgba(40, 46, 80, 0.14);
       -webkit-backdrop-filter: blur(0.8vh) saturate(170%) brightness(1.08);
       backdrop-filter: blur(0.8vh) saturate(170%) brightness(1.08);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.16);
       box-shadow:
-        inset 0 0.2vh 0 rgba(255, 255, 255, 0.5),
-        inset 0 -0.15vh 0 rgba(255, 255, 255, 0.1),
-        inset 0 0 3vh rgba(255, 255, 255, 0.07),
-        0 1.4vh 3.5vh rgba(0, 0, 0, 0.38);
+        inset 0 0.2vh 0 rgba(255, 255, 255, 0.45),
+        inset 0 -0.15vh 0 rgba(255, 255, 255, 0.08),
+        inset 0 0 3vh rgba(255, 255, 255, 0.05),
+        0 1.4vh 3.5vh rgba(0, 0, 0, 0.3);
       border-radius: 3.2vh;
       overflow: hidden;
     }
@@ -233,20 +233,45 @@
       text-shadow: none;
     }
     .tv-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .tv-bubble {
-      min-width: 0;
-      background: rgba(124,158,255,.28);
-      border: 1px solid rgba(124,158,255,.55);
-      border-radius: 2vh 2vh 2vh 0.4vh;
-      padding: 1.3vh 1.1vw 1.5vh;
+    /* iMessage-style bubble in liquid glass: blue, tail bottom-left, name above, caption below */
+    .tv-col { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+    .tv-msg-from {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', var(--font-b);
+      font-size: 1.5vh; color: rgba(236, 238, 255, 0.8);
+      margin: 0 0 0.5vh 1.2vh;
     }
-    .tv-msg-from { font-size: 1.6vh; letter-spacing: 0.04em; color: var(--warm); margin-bottom: 0.6vh; }
+    .tv-bubble {
+      position: relative;
+      max-width: 100%;
+      background:
+        radial-gradient(120% 70% at 15% 0%, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 60%),
+        linear-gradient(180deg, rgba(64, 156, 255, 0.78), rgba(10, 122, 255, 0.82));
+      -webkit-backdrop-filter: blur(0.8vh) saturate(170%);
+      backdrop-filter: blur(0.8vh) saturate(170%);
+      border-radius: 2.6vh 2.6vh 2.6vh 0.6vh;
+      box-shadow:
+        inset 0 0.2vh 0 rgba(255, 255, 255, 0.5),
+        inset 0 -0.15vh 0 rgba(255, 255, 255, 0.12),
+        0 1vh 2.4vh rgba(0, 0, 0, 0.3);
+      padding: 1.3vh 1.4vw 1.4vh;
+    }
+    .tv-bubble::before {
+      content: '';
+      position: absolute;
+      left: -1.1vh; bottom: 0;
+      width: 1.3vh; height: 1.8vh;
+      background: no-repeat center / 100% 100% url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 14'%3E%3Cpath d='M12 0C12 9 8 13 0 14L12 14Z' fill='%230a7aff' fill-opacity='.82'/%3E%3C/svg%3E");
+    }
     .tv-msg-text {
-      font-family: var(--font-d); font-size: 2.8vh; line-height: 1.25; color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', var(--font-b);
+      font-size: 2.6vh; line-height: 1.28; color: #fff; text-shadow: none;
       overflow-wrap: anywhere;
       display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
     }
-    .tv-msg-count { font-size: 1.2vh; color: var(--dim); margin-top: 0.6vh; letter-spacing: 0.1em; }
+    .tv-msg-count {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', var(--font-b);
+      font-size: 1.3vh; color: rgba(236, 238, 255, 0.7); margin: 0.5vh 0 0 1.2vh;
+    }
 
     .events { display: flex; flex-direction: column; gap: 2.2vh; }
 
@@ -638,9 +663,12 @@ function showMessage() {
 
   const m = _msgs[_msgIdx % _msgs.length];
   const bubble = el('div', 'tv-bubble');
-  bubble.append(el('div', 'tv-msg-from', 'From ' + m.from), el('div', 'tv-msg-text', m.text));
+  bubble.append(el('div', 'tv-msg-text', m.text));
+
+  const col = el('div', 'tv-col');
+  col.append(el('div', 'tv-msg-from', 'From ' + m.from), bubble);
   if (_msgs.length > 1) {
-    bubble.append(el('div', 'tv-msg-count', (_msgIdx % _msgs.length + 1) + ' of ' + _msgs.length + ' today'));
+    col.append(el('div', 'tv-msg-count', (_msgIdx % _msgs.length + 1) + ' of ' + _msgs.length + ' today'));
   }
 
   // Profile photo at /dashboard/avatars/<name>.jpg (dad, mum, harry, chacha); falls back to the initial
@@ -650,7 +678,7 @@ function showMessage() {
   img.src = '/dashboard/avatars/' + m.from.toLowerCase().replace(/\s+/g, '') + '.jpg';
 
   const box = el('div', 'tv-msg');
-  box.append(avatar, bubble);
+  box.append(avatar, col);
   host.append(box);
 }
 
