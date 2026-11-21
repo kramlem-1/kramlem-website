@@ -97,9 +97,9 @@
       min-height: 0;
       /* Liquid glass: specular highlight, diagonal sheen, tinted base, saturated frosted backdrop */
       background:
-        radial-gradient(120% 55% at 12% 0%, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 60%),
-        linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 45%, rgba(255, 255, 255, 0.05) 100%),
-        rgba(40, 46, 80, 0.14);
+        radial-gradient(120% 55% at 12% 0%, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0) 60%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 45%, rgba(255, 255, 255, 0.03) 100%),
+        rgba(40, 46, 80, 0.05);
       -webkit-backdrop-filter: blur(0.8vh) saturate(170%) brightness(1.08);
       backdrop-filter: blur(0.8vh) saturate(170%) brightness(1.08);
       border: 1px solid rgba(255, 255, 255, 0.16);
@@ -213,10 +213,27 @@
       left: 2vw;
       top: 50%;
       transform: translateY(-50%);
-      width: 24vw;
+      width: 26vw;
       z-index: 3;
     }
-    .tv-msg { display: flex; align-items: flex-end; gap: 0.9vw; animation: msgIn 0.6s ease; }
+    /* iOS-style notification banner in liquid glass: sender and message inside one card */
+    .tv-msg {
+      display: flex; align-items: flex-start; gap: 0.9vw;
+      padding: 1.5vh 1.1vw 1.6vh 1vw;
+      border-radius: 3vh;
+      background:
+        radial-gradient(120% 70% at 12% 0%, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0) 60%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+        rgba(30, 34, 56, 0.16);
+      -webkit-backdrop-filter: blur(1.2vh) saturate(180%) brightness(1.05);
+      backdrop-filter: blur(1.2vh) saturate(180%) brightness(1.05);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow:
+        inset 0 0.2vh 0 rgba(255, 255, 255, 0.4),
+        inset 0 -0.15vh 0 rgba(255, 255, 255, 0.07),
+        0 1.2vh 3vh rgba(0, 0, 0, 0.3);
+      animation: msgIn 0.6s ease;
+    }
     @keyframes msgIn { from { opacity: 0; transform: translateY(1vh); } to { opacity: 1; transform: none; } }
     .tv-avatar {
       flex: none;
@@ -233,45 +250,16 @@
       text-shadow: none;
     }
     .tv-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    /* iMessage-style bubble in liquid glass: blue, tail bottom-left, name above, caption below */
-    .tv-col { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
-    .tv-msg-from {
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', var(--font-b);
-      font-size: 1.5vh; color: rgba(236, 238, 255, 0.8);
-      margin: 0 0 0.5vh 1.2vh;
-    }
-    .tv-bubble {
-      position: relative;
-      max-width: 100%;
-      background:
-        radial-gradient(120% 70% at 15% 0%, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 60%),
-        linear-gradient(180deg, rgba(64, 156, 255, 0.78), rgba(10, 122, 255, 0.82));
-      -webkit-backdrop-filter: blur(0.8vh) saturate(170%);
-      backdrop-filter: blur(0.8vh) saturate(170%);
-      border-radius: 2.6vh 2.6vh 2.6vh 0.6vh;
-      box-shadow:
-        inset 0 0.2vh 0 rgba(255, 255, 255, 0.5),
-        inset 0 -0.15vh 0 rgba(255, 255, 255, 0.12),
-        0 1vh 2.4vh rgba(0, 0, 0, 0.3);
-      padding: 1.3vh 1.4vw 1.4vh;
-    }
-    .tv-bubble::before {
-      content: '';
-      position: absolute;
-      left: -1.1vh; bottom: 0;
-      width: 1.3vh; height: 1.8vh;
-      background: no-repeat center / 100% 100% url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 14'%3E%3Cpath d='M12 0C12 9 8 13 0 14L12 14Z' fill='%230a7aff' fill-opacity='.82'/%3E%3C/svg%3E");
-    }
+    .tv-col { flex: 1; min-width: 0; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', var(--font-b); }
+    .tv-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1vw; margin-bottom: 0.4vh; }
+    .tv-msg-from { font-size: 2.1vh; font-weight: 600; color: #fff; }
+    .tv-msg-time { font-size: 1.5vh; color: rgba(236, 238, 255, 0.7); white-space: nowrap; }
     .tv-msg-text {
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', var(--font-b);
-      font-size: 2.6vh; line-height: 1.28; color: #fff; text-shadow: none;
+      font-size: 2.3vh; line-height: 1.25; color: rgba(255, 255, 255, 0.95); text-shadow: none;
       overflow-wrap: anywhere;
       display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
     }
-    .tv-msg-count {
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', var(--font-b);
-      font-size: 1.3vh; color: rgba(236, 238, 255, 0.7); margin: 0.5vh 0 0 1.2vh;
-    }
+    .tv-msg-count { font-size: 1.3vh; color: rgba(236, 238, 255, 0.65); margin-top: 0.6vh; }
 
     .events { display: flex; flex-direction: column; gap: 2.2vh; }
 
@@ -662,11 +650,15 @@ function showMessage() {
   if (!_msgs.length) return;
 
   const m = _msgs[_msgIdx % _msgs.length];
-  const bubble = el('div', 'tv-bubble');
-  bubble.append(el('div', 'tv-msg-text', m.text));
+  const sent = Date.now() - m.at < 60_000
+    ? 'now'
+    : new Date(m.at).toLocaleTimeString('en-AU', { timeZone: C.timeZone, hour: '2-digit', minute: '2-digit', hour12: false });
+
+  const head = el('div', 'tv-head');
+  head.append(el('div', 'tv-msg-from', m.from), el('div', 'tv-msg-time', sent));
 
   const col = el('div', 'tv-col');
-  col.append(el('div', 'tv-msg-from', 'From ' + m.from), bubble);
+  col.append(head, el('div', 'tv-msg-text', m.text));
   if (_msgs.length > 1) {
     col.append(el('div', 'tv-msg-count', (_msgIdx % _msgs.length + 1) + ' of ' + _msgs.length + ' today'));
   }
