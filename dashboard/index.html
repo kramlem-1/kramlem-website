@@ -58,7 +58,6 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      border-bottom: 1px solid var(--border);
       gap: 0.6vh;
     }
 
@@ -66,8 +65,7 @@
       font-family: var(--font-b);
       font-size: 2vh;
       font-weight: 400;
-      letter-spacing: 0.28em;
-      text-transform: uppercase;
+      letter-spacing: 0.08em;
       color: var(--dim);
     }
 
@@ -97,8 +95,10 @@
     .panel {
       padding: 2.5vh 2vw;
       min-height: 0;
-      background: rgba(9, 9, 16, 0.55);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(38, 42, 68, 0.50);
+      -webkit-backdrop-filter: blur(1.4vh);
+      backdrop-filter: blur(1.4vh);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 3.2vh;
       overflow: hidden;
     }
@@ -231,7 +231,7 @@
       border-radius: 2vh 2vh 2vh 0.4vh;
       padding: 1.3vh 1.1vw 1.5vh;
     }
-    .tv-msg-from { font-size: 1.3vh; letter-spacing: 0.16em; text-transform: uppercase; color: var(--warm); margin-bottom: 0.6vh; }
+    .tv-msg-from { font-size: 1.6vh; letter-spacing: 0.04em; color: var(--warm); margin-bottom: 0.6vh; }
     .tv-msg-text {
       font-family: var(--font-d); font-size: 2.8vh; line-height: 1.25; color: var(--text);
       overflow-wrap: anywhere;
@@ -305,10 +305,9 @@
     }
 
     .cd-unit {
-      font-size: 1.8vh;
+      font-size: 2.4vh;
       font-weight: 500;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
+      letter-spacing: 0.04em;
       color: var(--warm);
       opacity: 0.7;
       margin-top: -1vh;
@@ -503,7 +502,7 @@ function tick() {
   document.getElementById('date-line').textContent =
     now.toLocaleDateString('en-AU', {
       weekday:'long', day:'numeric', month:'long', year:'numeric'
-    }).toUpperCase();
+    });
 
   const h = now.getHours();
   document.getElementById('greeting').textContent =
@@ -716,8 +715,8 @@ async function fetchWeather() {
     document.getElementById('wx-desc').textContent = wmoDesc(cur.weather_code);
 
     const sunsetTime = new Date(daily.sunset[0]).toLocaleTimeString('en-AU', {
-      hour: 'numeric', minute: '2-digit', hour12: true, timeZone: C.timeZone
-    }).toLowerCase().replace(' am', 'am').replace(' pm', 'pm');
+      hour: '2-digit', minute: '2-digit', hour12: false, timeZone: C.timeZone
+    });
 
     const stats = [
       { label: 'Feels like', value: Math.round(cur.apparent_temperature) + '°',         color: '' },
