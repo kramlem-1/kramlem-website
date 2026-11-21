@@ -679,23 +679,29 @@ function showMessage() {
   host.append(box);
 }
 
+// Only messages sent today (Sydney) are shown, whatever the server or a cache says.
+function applyMessages(list) {
+  const today = sydDate(Date.now());
+  const msgs = list.filter(m => sydDate(m.at) === today);
+  const key = JSON.stringify(msgs);
+  if (key === _msgKey) return;
+  _msgKey = key;
+
+  _msgs = msgs;
+  _msgIdx = 0;
+  showMessage();
+
+  clearInterval(_msgTimer);
+  if (_msgs.length > 1) {
+    _msgTimer = setInterval(() => { _msgIdx++; showMessage(); }, 12_000);
+  }
+}
+
 async function fetchMessages() {
   try {
-    const res = await fetch('/api/message');
-    if (!res.ok) return;
-    const msgs = (await res.json()).messages || [];
-    const key = JSON.stringify(msgs);
-    if (key === _msgKey) return;
-    _msgKey = key;
-
-    _msgs = msgs;
-    _msgIdx = 0;
-    showMessage();
-
-    clearInterval(_msgTimer);
-    if (_msgs.length > 1) {
-      _msgTimer = setInterval(() => { _msgIdx++; showMessage(); }, 12_000);
-    }
+    const res = await fetch('/api/message?_=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok || res.redirected) return;
+    applyMessages((await res.json()).messages || []);
   } catch {}
 }
 
@@ -1087,6 +1093,7 @@ setInterval(fetchCalendar, C.calendarRefreshMins * 60_000);
 
 fetchMessages();
 setInterval(fetchMessages, 60_000);
+setInterval(() => applyMessages(_msgs), 30_000);
 
 fetchWeather();
 setInterval(fetchWeather, C.weatherRefreshMins * 60_000);
