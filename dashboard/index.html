@@ -460,7 +460,10 @@
         <div class="cd-hms" id="cd-hms"></div>
         <div class="cd-date" id="cd-date"></div>
         <div class="cd-note" id="cd-note"></div>
-        <div class="cd-wx" id="cd-wx"></div>
+        <div class="cd-wx" id="cd-wx">
+          <div id="cd-wx-place"></div>
+          <div id="cd-wx-cond"></div>
+        </div>
       </div>
       <div class="wotd" id="wotd">
         <span class="wotd-word" id="wotd-word">—</span>
@@ -861,7 +864,11 @@ function tickCountdown() {
   const wxEl = document.getElementById('cd-wx');
   if (_tripWx.length) {
     const w = _tripWx[slot % _tripWx.length];
-    wxEl.textContent = wmoIcon(w.code) + ' ' + w.name + ' right now: ' + w.temp + '° · ' + wmoDesc(w.code);
+    const localTime = new Date(Date.now() + w.offset * 1000).toLocaleTimeString('en-GB', {
+      timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hour12: false
+    });
+    document.getElementById('cd-wx-place').textContent = w.name + ' right now · ' + localTime;
+    document.getElementById('cd-wx-cond').textContent  = wmoIcon(w.code) + ' ' + w.temp + '° · ' + wmoDesc(w.code);
     if (w.name !== _wxName) { _wxName = w.name; flip(wxEl); }
   }
 }
@@ -907,6 +914,7 @@ async function fetchTripWeather() {
       name: places[i].name,
       temp: Math.round(d.current.temperature_2m),
       code: d.current.weather_code,
+      offset: d.utc_offset_seconds,
     }));
   } catch {}
 }
