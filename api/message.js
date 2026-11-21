@@ -10,7 +10,7 @@
  * Optional:
  *   FAMILY_SENDERS  — comma-separated allowlist (default: the four family addresses)
  *
- * Returns { messages: [{ text, from, at }, ...] } newest first, max 3.
+ * Returns { messages: [{ text, from, at }, ...] } newest first, max 6.
  * Add ?debug=1 to see why emails were included or skipped.
  */
 
@@ -120,7 +120,7 @@ module.exports = async (req, res) => {
     messages.sort((a, b) => b.at - a.at);
 
     if (req.query.debug === '1') return res.status(200).json({ today, debug, messages });
-    res.status(200).json({ messages: messages.slice(0, 3) });
+    res.status(200).json({ messages: messages.slice(0, 6) });
   } catch (err) {
     res.status(200).json({ messages: [], error: err.message });
   }
