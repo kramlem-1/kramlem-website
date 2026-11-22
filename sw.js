@@ -31,6 +31,12 @@ self.addEventListener('activate', (event) => {
         .filter((n) => n.startsWith('kramlem-holiday-') && n !== CACHE)
         .map((n) => caches.delete(n))
     );
+    // Drop anything the old worker filed for the dashboard or its APIs.
+    const cache = await caches.open(CACHE);
+    for (const req of await cache.keys()) {
+      const p = new URL(req.url).pathname;
+      if (p.startsWith('/api/') || p.startsWith('/dashboard')) await cache.delete(req);
+    }
     await self.clients.claim();
   })());
 });
@@ -43,6 +49,10 @@ self.addEventListener('fetch', (event) => {
   const mine = url.origin === self.location.origin;
   const font = FONTS.indexOf(url.origin) !== -1;
   if (!mine && !font) return;
+
+  // The family dashboard and its live data (calendar, photos, messages) share this
+  // origin but must never be served from this cache — always go to the network.
+  if (mine && (url.pathname.startsWith('/api/') || url.pathname.startsWith('/dashboard'))) return;
 
   // The itinerary itself: newest wins when there is a network, cache when there
   // is not — so an updated page is never held back by an old copy.
