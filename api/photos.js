@@ -49,8 +49,10 @@ module.exports = async (req, res) => {
     return res.status(200).json({ photos: [], error: 'OneDrive credentials not configured. Run scripts/get-onedrive-token.js.' });
   }
 
-  // ONEDRIVE_FOLDER may list several folders, comma-separated.
-  const folders = (process.env.ONEDRIVE_FOLDER || 'Family Dashboard Photos').split(',').map(f => f.trim()).filter(Boolean);
+  // ONEDRIVE_FOLDER may list several folders, one per line or separated by ';'.
+  // A single line is split on commas instead (a folder name containing commas
+  // needs its own line or a trailing ';').
+  const folders = (process.env.ONEDRIVE_FOLDER || 'Family Dashboard Photos').split(/\r?\n|;/).flatMap((f, _, a) => a.length > 1 ? [f] : f.split(',')).map(f => f.trim()).filter(Boolean);
   const folder = folders.join(', ');
 
   try {
