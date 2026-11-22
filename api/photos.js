@@ -65,7 +65,7 @@ module.exports = async (req, res) => {
 
     const ids = []; // image item ids; thumbnails are fetched only for the sample
     const debugPages = [];
-    const MAX_FOLDERS = 60, MAX_DEPTH = 4, MAX_RETURN = 300, BATCH = 8;
+    const MAX_FOLDERS = 60, MAX_DEPTH = 4, MAX_RETURN = 300, BATCH = 16;
     let foldersRead = 0;
 
     // Read one folder (all pages). Returns its subfolder URLs; pushes photo URLs.
@@ -75,7 +75,7 @@ module.exports = async (req, res) => {
       while (nextUrl) {
         const r = await fetch(nextUrl, {
           headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-          signal: AbortSignal.timeout(10000),
+          signal: AbortSignal.timeout(25000),
         });
         const body = await r.json();
         if (!r.ok) {
@@ -144,8 +144,11 @@ module.exports = async (req, res) => {
       return res.status(200).json({ folder, found: total, returned: photos.length, foldersRead, pages: debugPages });
     }
 
+    // Never let the CDN keep an empty result for 15 minutes.
+    if (!photos.length) res.setHeader('Cache-Control', 'no-store');
     res.status(200).json({ photos });
   } catch (err) {
+    res.setHeader('Cache-Control', 'no-store'); // don't cache failures
     res.status(200).json({ photos: [], error: err.message });
   }
 };
