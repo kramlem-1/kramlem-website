@@ -8,7 +8,8 @@
  *   ONEDRIVE_CLIENT_ID      — Azure app registration client ID
  *   ONEDRIVE_CLIENT_SECRET  — Azure app registration client secret
  *   ONEDRIVE_REFRESH_TOKEN  — Long-lived refresh token from OAuth flow
- *   ONEDRIVE_FOLDER         — Folder name in OneDrive (default: "Family Dashboard Photos")
+ *   ONEDRIVE_FOLDER         — Folder name in OneDrive (default: "Family Dashboard Photos");
+ *                             several folders can be comma-separated
  *
  * Returns { photos: [url, ...] } — empty array if not configured or on error.
  * Add ?debug=1 to see the raw API response for troubleshooting.
@@ -48,14 +49,15 @@ module.exports = async (req, res) => {
     return res.status(200).json({ photos: [], error: 'OneDrive credentials not configured. Run scripts/get-onedrive-token.js.' });
   }
 
-  const folder = (process.env.ONEDRIVE_FOLDER || 'Family Dashboard Photos').trim();
+  // ONEDRIVE_FOLDER may list several folders, comma-separated.
+  const folders = (process.env.ONEDRIVE_FOLDER || 'Family Dashboard Photos').split(',').map(f => f.trim()).filter(Boolean);
+  const folder = folders.join(', ');
 
   try {
     const accessToken = await getAccessToken(clientId, refreshToken);
 
     // Restrict explicitly to the named folder — Files.Read allows broader access,
     // so we always use the specific folder path rather than a root search.
-    const folderEncoded = folder.split('/').map(encodeURIComponent).join('/');
     const select = '?$select=id,name,file,folder&$expand=thumbnails($select=large)&$top=1000';
 
     const photos = [];
@@ -64,7 +66,10 @@ module.exports = async (req, res) => {
     let foldersRead = 0;
 
     // Walk the folder and its subfolders (breadth-first, depth/size capped).
-    let queue = [{ url: `${GRAPH}/me/drive/root:/${folderEncoded}:/children${select}`, depth: 0 }];
+    let queue = folders.map(f => ({
+      url: `${GRAPH}/me/drive/root:/${f.split('/').map(encodeURIComponent).join('/')}:/children${select}`,
+      depth: 0,
+    }));
 
     while (queue.length && photos.length < MAX_PHOTOS && foldersRead < MAX_FOLDERS) {
       const { url, depth } = queue.shift();
