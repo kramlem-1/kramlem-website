@@ -51,8 +51,9 @@ module.exports = async (req, res) => {
 
   // ONEDRIVE_FOLDER may list several folders, one per line or separated by ';'.
   // A single line is split on commas instead (a folder name containing commas
-  // needs its own line or a trailing ';').
-  const folders = (process.env.ONEDRIVE_FOLDER || 'Family Dashboard Photos').split(/\r?\n|;/).flatMap((f, _, a) => a.length > 1 ? [f] : f.split(',')).map(f => f.trim()).filter(Boolean);
+  // needs its own line or a trailing ';'). A line starting with # is ignored,
+  // so a folder can be switched off without deleting it.
+  const folders = (process.env.ONEDRIVE_FOLDER || 'Family Dashboard Photos').split(/\r?\n|;/).flatMap((f, _, a) => a.length > 1 ? [f] : f.split(',')).map(f => f.trim()).filter(f => f && !f.startsWith('#'));
   const folder = folders.join(', ');
 
   try {
