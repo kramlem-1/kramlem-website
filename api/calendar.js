@@ -31,6 +31,14 @@ const ical = require('node-ical');
 
 const DAYS_AHEAD = 14;
 
+// Public holidays: Google's public "Holidays in Australia" feed (no setup needed).
+// It mixes every state, so only national + NSW holidays are kept. Shared-date
+// "(regional holiday)" entries are the NSW dates (verified); state-named ones
+// (Victoria, Queensland, WA, NT, Tasmania, ...) are dropped by omission.
+// Set ICAL_HOLIDAYS=off to disable, or to a URL to use another feed.
+const HOLIDAYS_URL = 'https://calendar.google.com/calendar/ical/en.australian%23holiday%40group.v.calendar.google.com/public/basic.ics';
+const HOLIDAY_KEEP = /^(New Year's Day|Australia Day( Observed)?|Good Friday|Holy Saturday|Easter (Sunday|Monday)|ANZAC Day|King's Birthday|Labour Day|Christmas Day|Boxing Day)( \(regional holiday\))?$/;
+
 function fetchCalendar(url) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('timeout')), 8000);
@@ -107,6 +115,19 @@ module.exports = async (req, res) => {
     }
   });
 
+  const holidaysUrl = process.env.ICAL_HOLIDAYS === 'off' ? '' : (process.env.ICAL_HOLIDAYS || HOLIDAYS_URL);
+  if (holidaysUrl) {
+    fetches.push(fetchCalendar(holidaysUrl)
+      .then(data => {
+        for (const k of Object.keys(data)) {
+          const e = data[k];
+          if (e.type === 'VEVENT') e.isHoliday = true;
+        }
+        return { name: 'Holidays', data };
+      })
+      .catch(() => ({ name: 'Holidays', data: {} })));
+  }
+
   const results = await Promise.all(fetches);
 
   const seen = new Set();
@@ -118,7 +139,10 @@ module.exports = async (req, res) => {
 
       const start = ev.start instanceof Date ? ev.start : new Date(ev.start);
       if (!start || isNaN(start)) continue;
-      if (start < now || start > cutoff) continue;
+      const endRaw = ev.end instanceof Date ? ev.end : (ev.end ? new Date(ev.end) : null);
+      const ongoingAllDay = ev.datetype === 'date' && endRaw && endRaw > now;
+      if ((start < now && !ongoingAllDay) || start > cutoff) continue;
+      if (ev.isHoliday && !HOLIDAY_KEEP.test((ev.summary || '').trim())) continue;
       // Deduplicate before filtering so a filtered event blocks all its duplicates
       const key = (ev.summary || '') + '|' + start.toISOString().slice(0, 16);
       if (seen.has(key)) continue;
