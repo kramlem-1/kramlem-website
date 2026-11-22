@@ -132,6 +132,9 @@ module.exports = async (req, res) => {
 
   const seen = new Set();
   const events = [];
+  const debug = req.query && req.query.debug === '1';
+  const skipped = [];
+  const skip = (ev, why) => { if (debug) skipped.push({ summary: ev.summary, start: String(ev.start), why }); };
 
   for (const { data } of results) {
     for (const ev of Object.values(data)) {
@@ -141,15 +144,16 @@ module.exports = async (req, res) => {
       if (!start || isNaN(start)) continue;
       const endRaw = ev.end instanceof Date ? ev.end : (ev.end ? new Date(ev.end) : null);
       const ongoingAllDay = ev.datetype === 'date' && endRaw && endRaw > now;
-      if ((start < now && !ongoingAllDay) || start > cutoff) continue;
+      if ((start < now && !ongoingAllDay) || start > cutoff) { skip(ev, 'outside next ' + DAYS_AHEAD + ' days'); continue; }
       if (ev.isHoliday && !HOLIDAY_KEEP.test((ev.summary || '').trim())) continue;
+      if (ev.rrule) skip(ev, 'recurring event (only the first occurrence is read)');
       // Deduplicate before filtering so a filtered event blocks all its duplicates
       const key = (ev.summary || '') + '|' + start.toISOString().slice(0, 16);
       if (seen.has(key)) continue;
       seen.add(key);
 
-      if (isExcluded(ev.summary)) continue;
-      if (hasExternalAttendee(ev)) continue;
+      if (isExcluded(ev.summary)) { skip(ev, 'matches ICAL_EXCLUDE'); continue; }
+      if (hasExternalAttendee(ev)) { skip(ev, 'has attendee outside FAMILY_DOMAIN'); continue; }
 
       const end = ev.end instanceof Date ? ev.end : (ev.end ? new Date(ev.end) : null);
 
@@ -165,5 +169,11 @@ module.exports = async (req, res) => {
 
   events.sort((a, b) => new Date(a.start) - new Date(b.start));
 
+  if (debug) {
+    return res.status(200).json({
+      sources: results.map(r => ({ name: r.name, items: Object.keys(r.data).length })),
+      events, skipped: skipped.filter(x => !/Holiday|Daylight|Eve$/.test(x.summary || '')).slice(0, 80),
+    });
+  }
   res.status(200).json({ events, updated: now.toISOString() });
 };
