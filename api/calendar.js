@@ -144,7 +144,7 @@ module.exports = async (req, res) => {
       if (!start || isNaN(start)) continue;
       const endRaw = ev.end instanceof Date ? ev.end : (ev.end ? new Date(ev.end) : null);
       const ongoingAllDay = ev.datetype === 'date' && endRaw && endRaw > now;
-      if ((start < now && !ongoingAllDay) || start > cutoff) { skip(ev, 'outside next ' + DAYS_AHEAD + ' days'); continue; }
+      if ((start < now && !ongoingAllDay) || start > cutoff) { if (start > cutoff) skip(ev, 'beyond ' + DAYS_AHEAD + ' days'); continue; }
       if (ev.isHoliday && !HOLIDAY_KEEP.test((ev.summary || '').trim())) continue;
       if (ev.rrule) skip(ev, 'recurring event (only the first occurrence is read)');
       // Deduplicate before filtering so a filtered event blocks all its duplicates
