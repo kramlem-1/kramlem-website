@@ -136,34 +136,68 @@ module.exports = async (req, res) => {
   const skipped = [];
   const skip = (ev, why) => { if (debug) skipped.push({ summary: ev.summary, start: String(ev.start), why }); };
 
+  const asDate = v => (v instanceof Date ? v : (v ? new Date(v) : null));
+  const dayKey = d => d.toISOString().slice(0, 10);
+
+  // Expand one VEVENT into the occurrences that start (or, for all-day, run) now..cutoff.
+  function occurrences(ev) {
+    const start = asDate(ev.start);
+    if (!start || isNaN(start)) return [];
+    const end = asDate(ev.end);
+    const dur = end ? end - start : 0;
+    const allDay = ev.datetype === 'date';
+    const out = [];
+    const add = (s, e, over) => {
+      const e2 = e || (dur ? new Date(s.getTime() + dur) : null);
+      const ongoingAllDay = allDay && e2 && e2 > now;
+      if ((s < now && !ongoingAllDay) || s > cutoff) return;
+      out.push({ ev: over || ev, start: s, end: e2 });
+    };
+
+    if (ev.rrule) {
+      const dayAgo = new Date(now.getTime() - 24 * 3600 * 1000);
+      let dates = [];
+      try { dates = ev.rrule.between(dayAgo, cutoff, true); } catch { dates = []; }
+      for (const d of dates) {
+        const k = dayKey(d);
+        if (ev.exdate && Object.values(ev.exdate).some(x => dayKey(asDate(x)) === k)) continue;
+        const over = ev.recurrences && Object.values(ev.recurrences).find(r => dayKey(asDate(r.start)) === k);
+        if (over) { add(asDate(over.start), asDate(over.end), over); continue; }
+        add(d, null);
+      }
+      // Moved occurrences whose original date fell outside the window
+      for (const r of Object.values(ev.recurrences || {})) add(asDate(r.start), asDate(r.end), r);
+    } else {
+      add(start, end);
+    }
+    return out;
+  }
+
+  // The family-domain guest filter only applies to the old per-person feeds.
+  const useGuestFilter = !process.env.ICAL_FAMILY;
+
   for (const { data } of results) {
     for (const ev of Object.values(data)) {
       if (ev.type !== 'VEVENT') continue;
-
-      const start = ev.start instanceof Date ? ev.start : new Date(ev.start);
-      if (!start || isNaN(start)) continue;
-      const endRaw = ev.end instanceof Date ? ev.end : (ev.end ? new Date(ev.end) : null);
-      const ongoingAllDay = ev.datetype === 'date' && endRaw && endRaw > now;
-      if ((start < now && !ongoingAllDay) || start > cutoff) { if (start > cutoff) skip(ev, 'beyond ' + DAYS_AHEAD + ' days'); continue; }
       if (ev.isHoliday && !HOLIDAY_KEEP.test((ev.summary || '').trim())) continue;
-      if (ev.rrule) skip(ev, 'recurring event (only the first occurrence is read)');
-      // Deduplicate before filtering so a filtered event blocks all its duplicates
-      const key = (ev.summary || '') + '|' + start.toISOString().slice(0, 16);
-      if (seen.has(key)) continue;
-      seen.add(key);
 
-      if (isExcluded(ev.summary)) { skip(ev, 'matches ICAL_EXCLUDE'); continue; }
-      if (hasExternalAttendee(ev)) { skip(ev, 'has attendee outside FAMILY_DOMAIN'); continue; }
+      for (const { ev: e, start, end } of occurrences(ev)) {
+        // Deduplicate before filtering so a filtered event blocks all its duplicates
+        const key = (e.summary || '') + '|' + start.toISOString().slice(0, 16);
+        if (seen.has(key)) continue;
+        seen.add(key);
 
-      const end = ev.end instanceof Date ? ev.end : (ev.end ? new Date(ev.end) : null);
+        if (isExcluded(e.summary)) { skip(e, 'matches ICAL_EXCLUDE'); continue; }
+        if (useGuestFilter && hasExternalAttendee(e)) { skip(e, 'has attendee outside FAMILY_DOMAIN'); continue; }
 
-      events.push({
-        summary:  ev.summary  || '(No title)',
-        location: ev.location || '',
-        start:    start.toISOString(),
-        end:      end ? end.toISOString() : null,
-        allDay:   ev.datetype === 'date',
-      });
+        events.push({
+          summary:  e.summary  || '(No title)',
+          location: e.location || '',
+          start:    start.toISOString(),
+          end:      end ? end.toISOString() : null,
+          allDay:   ev.datetype === 'date',
+        });
+      }
     }
   }
 
