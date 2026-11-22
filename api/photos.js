@@ -19,7 +19,20 @@ const TENANT    = 'consumers';
 const TOKEN_URL = `https://login.microsoftonline.com/${TENANT}/oauth2/v2.0/token`;
 const GRAPH     = 'https://graph.microsoft.com/v1.0';
 
+// Kept in memory between invocations on a warm instance: the list of image ids
+// (the slow part: walking every folder) and the access token.
+let _idCache = { key: '', at: 0, ids: [] };
+let _tok = { value: '', exp: 0 };
+const ID_TTL = 6 * 3600 * 1000;
+
 async function getAccessToken(clientId, refreshToken) {
+  if (_tok.value && Date.now() < _tok.exp) return _tok.value;
+  const v = await fetchAccessToken(clientId, refreshToken);
+  _tok = { value: v, exp: Date.now() + 40 * 60 * 1000 };
+  return v;
+}
+
+async function fetchAccessToken(clientId, refreshToken) {
   const params = new URLSearchParams({
     client_id:     clientId,
     refresh_token: refreshToken,
@@ -63,50 +76,60 @@ module.exports = async (req, res) => {
     // so we always use the specific folder path rather than a root search.
     const select = '?$select=id,file,folder&$top=1000';
 
-    const ids = []; // image item ids; thumbnails are fetched only for the sample
-    const debugPages = [];
-    const MAX_FOLDERS = 60, MAX_DEPTH = 4, MAX_RETURN = 300, BATCH = 16;
+    // image item ids; thumbnails are fetched only for the sample
+    const MAX_RETURN = 300;
+    let ids;
     let foldersRead = 0;
+    const debugPages = [];
+    const cached = _idCache.key === folder && Date.now() - _idCache.at < ID_TTL && _idCache.ids.length;
+    if (cached) {
+      ids = _idCache.ids.slice();
+    } else {
+      ids = [];
+      const MAX_FOLDERS = 60, MAX_DEPTH = 4, BATCH = 16;
 
-    // Read one folder (all pages). Returns its subfolder URLs; pushes photo URLs.
-    async function readFolder({ url, depth }) {
-      let nextUrl = url;
-      const subs = [];
-      while (nextUrl) {
-        const r = await fetch(nextUrl, {
-          headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-          signal: AbortSignal.timeout(25000),
-        });
-        const body = await r.json();
-        if (!r.ok) {
-          // The top folder failing is fatal; a bad subfolder is just skipped.
-          if (depth === 0) throw new Error(`Graph API ${r.status}: ${body.error?.message || JSON.stringify(body)}`);
-          break;
-        }
-        let n = 0;
-        for (const item of body.value || []) {
-          if (item.folder && depth < MAX_DEPTH) {
-            subs.push({ url: `${GRAPH}/me/drive/items/${item.id}/children${select}`, depth: depth + 1 });
-          } else if (item.file && /^image\//i.test(item.file.mimeType)) {
-            ids.push(item.id); n++;
+      // Read one folder (all pages). Returns its subfolder URLs; pushes photo URLs.
+      async function readFolder({ url, depth }) {
+        let nextUrl = url;
+        const subs = [];
+        while (nextUrl) {
+          const r = await fetch(nextUrl, {
+            headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+            signal: AbortSignal.timeout(25000),
+          });
+          const body = await r.json();
+          if (!r.ok) {
+            // The top folder failing is fatal; a bad subfolder is just skipped.
+            if (depth === 0) throw new Error(`Graph API ${r.status}: ${body.error?.message || JSON.stringify(body)}`);
+            break;
           }
+          let n = 0;
+          for (const item of body.value || []) {
+            if (item.folder && depth < MAX_DEPTH) {
+              subs.push({ url: `${GRAPH}/me/drive/items/${item.id}/children${select}`, depth: depth + 1 });
+            } else if (item.file && /^image\//i.test(item.file.mimeType)) {
+              ids.push(item.id); n++;
+            }
+          }
+          if (req.query.debug === '1') debugPages.push({ depth, status: r.status, items: (body.value || []).length, photos: n });
+          nextUrl = body['@odata.nextLink'] || null;
         }
-        if (req.query.debug === '1') debugPages.push({ depth, status: r.status, items: (body.value || []).length, photos: n });
-        nextUrl = body['@odata.nextLink'] || null;
+        return subs;
       }
-      return subs;
-    }
 
-    // Walk folders breadth-first, a few at a time (sequential reads were far too slow).
-    let queue = folders.map(f => ({
-      url: `${GRAPH}/me/drive/root:/${f.split('/').map(encodeURIComponent).join('/')}:/children${select}`,
-      depth: 0,
-    }));
-    while (queue.length && foldersRead < MAX_FOLDERS) {
-      const batch = queue.splice(0, Math.min(BATCH, MAX_FOLDERS - foldersRead));
-      foldersRead += batch.length;
-      const subs = await Promise.all(batch.map(readFolder));
-      queue.push(...subs.flat());
+      // Walk folders breadth-first, a few at a time (sequential reads were far too slow).
+      let queue = folders.map(f => ({
+        url: `${GRAPH}/me/drive/root:/${f.split('/').map(encodeURIComponent).join('/')}:/children${select}`,
+        depth: 0,
+      }));
+      while (queue.length && foldersRead < MAX_FOLDERS) {
+        const batch = queue.splice(0, Math.min(BATCH, MAX_FOLDERS - foldersRead));
+        foldersRead += batch.length;
+        const subs = await Promise.all(batch.map(readFolder));
+        queue.push(...subs.flat());
+      }
+
+      _idCache = { key: folder, at: Date.now(), ids: ids.slice() };
     }
 
     // The dashboard only needs a rotating selection: take a random sample so the
