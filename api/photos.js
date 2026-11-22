@@ -61,9 +61,9 @@ module.exports = async (req, res) => {
 
     // Restrict explicitly to the named folder — Files.Read allows broader access,
     // so we always use the specific folder path rather than a root search.
-    const select = '?$select=id,name,file,folder&$expand=thumbnails($select=large)&$top=1000';
+    const select = '?$select=id,file,folder&$top=1000';
 
-    const photos = [];
+    const ids = []; // image item ids; thumbnails are fetched only for the sample
     const debugPages = [];
     const MAX_FOLDERS = 60, MAX_DEPTH = 4, MAX_RETURN = 300, BATCH = 8;
     let foldersRead = 0;
@@ -88,8 +88,7 @@ module.exports = async (req, res) => {
           if (item.folder && depth < MAX_DEPTH) {
             subs.push({ url: `${GRAPH}/me/drive/items/${item.id}/children${select}`, depth: depth + 1 });
           } else if (item.file && /^image\//i.test(item.file.mimeType)) {
-            const t = item.thumbnails?.[0]?.large?.url;
-            if (t) { photos.push(t); n++; }
+            ids.push(item.id); n++;
           }
         }
         if (req.query.debug === '1') debugPages.push({ depth, status: r.status, items: (body.value || []).length, photos: n });
@@ -110,14 +109,36 @@ module.exports = async (req, res) => {
       queue.push(...subs.flat());
     }
 
-    // The dashboard only needs a rotating selection: return a random sample so the
-    // response stays small however big the library is.
-    const total = photos.length;
-    for (let i = photos.length - 1; i > 0; i--) {
+    // The dashboard only needs a rotating selection: take a random sample so the
+    // response stays small however big the library is, then fetch thumbnails for
+    // just those (Graph $batch, 20 per call).
+    const total = ids.length;
+    for (let i = ids.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [photos[i], photos[j]] = [photos[j], photos[i]];
+      [ids[i], ids[j]] = [ids[j], ids[i]];
     }
-    photos.length = Math.min(photos.length, MAX_RETURN);
+    ids.length = Math.min(ids.length, MAX_RETURN);
+
+    const photos = [];
+    const chunks = [];
+    for (let i = 0; i < ids.length; i += 20) chunks.push(ids.slice(i, i + 20));
+    await Promise.all(chunks.map(async chunk => {
+      try {
+        const r = await fetch(`${GRAPH}/$batch`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ requests: chunk.map((id, i) => ({
+            id: String(i), method: 'GET', url: `/me/drive/items/${id}/thumbnails?select=large`,
+          })) }),
+          signal: AbortSignal.timeout(15000),
+        });
+        const data = await r.json();
+        for (const x of data.responses || []) {
+          const u = x.body?.value?.[0]?.large?.url;
+          if (x.status === 200 && u) photos.push(u);
+        }
+      } catch { /* skip this chunk */ }
+    }));
 
     if (req.query.debug === '1') {
       return res.status(200).json({ folder, found: total, returned: photos.length, foldersRead, pages: debugPages });
