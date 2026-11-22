@@ -5,7 +5,9 @@ const ical = require('node-ical');
  *
  * Returns upcoming family calendar events as JSON.
  * Reads iCal feed URLs from environment variables:
- *   ICAL_JARVIS   — secret iCal address for the Jarvis family calendar (preferred)
+ *   ICAL_FAMILY   — secret iCal address for the shared family calendar; when set, it is
+ *                   the only source used and the per-person feeds below are ignored
+ *   ICAL_JARVIS  — secret iCal address for the Jarvis family calendar (preferred)
  *   ICAL_MARK     — secret iCal address for Mark's calendar (optional)
  *   ICAL_MELANIE  — secret iCal address for Melanie's calendar (optional)
  *   ICAL_HARRY    — secret iCal address for Harry's calendar (optional)
@@ -73,13 +75,18 @@ module.exports = async (req, res) => {
     });
   }
 
-  const sources = [
-    { url: process.env.ICAL_JARVIS,   name: 'Jarvis' },
-    { url: process.env.ICAL_MARK,     name: 'Mark' },
-    { url: process.env.ICAL_MELANIE,  name: 'Melanie' },
-    { url: process.env.ICAL_HARRY,    name: 'Harry' },
-    { url: process.env.ICAL_CHARLIZE, name: 'Charlize' },
-  ].filter(s => s.url);
+  // ICAL_FAMILY (the shared family calendar) takes priority and is used on its own;
+  // unset it to fall back to the per-person feeds below.
+  const sources = (process.env.ICAL_FAMILY
+    ? [{ url: process.env.ICAL_FAMILY, name: 'Family' }]
+    : [
+        { url: process.env.ICAL_JARVIS,   name: 'Jarvis' },
+        { url: process.env.ICAL_MARK,     name: 'Mark' },
+        { url: process.env.ICAL_MELANIE,  name: 'Melanie' },
+        { url: process.env.ICAL_HARRY,    name: 'Harry' },
+        { url: process.env.ICAL_CHARLIZE, name: 'Charlize' },
+      ]
+  ).filter(s => s.url);
 
   if (!sources.length) {
     return res.status(500).json({
