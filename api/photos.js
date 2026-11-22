@@ -1,7 +1,8 @@
 /*
  * GET /api/photos
  *
- * Returns thumbnail URLs for images in a OneDrive folder.
+ * Returns thumbnail URLs for images in a OneDrive folder and its subfolders
+ * (up to 4 levels deep, 60 folders, 2000 photos).
  *
  * Required env vars (obtain via scripts/get-onedrive-token.js):
  *   ONEDRIVE_CLIENT_ID      — Azure app registration client ID
@@ -55,35 +56,50 @@ module.exports = async (req, res) => {
     // Restrict explicitly to the named folder — Files.Read allows broader access,
     // so we always use the specific folder path rather than a root search.
     const folderEncoded = folder.split('/').map(encodeURIComponent).join('/');
-    let nextUrl =
-      `${GRAPH}/me/drive/root:/${folderEncoded}:/children` +
-      `?$select=name,file&$expand=thumbnails($select=large)&$top=1000`;
+    const select = '?$select=id,name,file,folder&$expand=thumbnails($select=large)&$top=1000';
 
     const photos = [];
     const debugPages = [];
+    const MAX_PHOTOS = 2000, MAX_FOLDERS = 60, MAX_DEPTH = 4;
+    let foldersRead = 0;
 
-    while (nextUrl && photos.length < 2000) {
-      const r = await fetch(nextUrl, {
-        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-        signal: AbortSignal.timeout(10000),
-      });
-      const body = await r.json();
+    // Walk the folder and its subfolders (breadth-first, depth/size capped).
+    let queue = [{ url: `${GRAPH}/me/drive/root:/${folderEncoded}:/children${select}`, depth: 0 }];
 
-      if (req.query.debug === '1') debugPages.push({ status: r.status, body });
-      if (!r.ok) throw new Error(`Graph API ${r.status}: ${body.error?.message || JSON.stringify(body)}`);
+    while (queue.length && photos.length < MAX_PHOTOS && foldersRead < MAX_FOLDERS) {
+      const { url, depth } = queue.shift();
+      let nextUrl = url;
+      foldersRead++;
 
-      (body.value || [])
-        .filter(item => item.file && /^image\//i.test(item.file.mimeType))
-        .forEach(item => {
-          const url = item.thumbnails?.[0]?.large?.url;
-          if (url) photos.push(url);
+      while (nextUrl && photos.length < MAX_PHOTOS) {
+        const r = await fetch(nextUrl, {
+          headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+          signal: AbortSignal.timeout(10000),
         });
+        const body = await r.json();
 
-      nextUrl = body['@odata.nextLink'] || null;
+        if (req.query.debug === '1') debugPages.push({ status: r.status, body });
+        if (!r.ok) {
+          // The top folder failing is fatal; a bad subfolder is just skipped.
+          if (depth === 0) throw new Error(`Graph API ${r.status}: ${body.error?.message || JSON.stringify(body)}`);
+          break;
+        }
+
+        for (const item of body.value || []) {
+          if (item.folder && depth < MAX_DEPTH) {
+            queue.push({ url: `${GRAPH}/me/drive/items/${item.id}/children${select}`, depth: depth + 1 });
+          } else if (item.file && /^image\//i.test(item.file.mimeType)) {
+            const t = item.thumbnails?.[0]?.large?.url;
+            if (t) photos.push(t);
+          }
+        }
+
+        nextUrl = body['@odata.nextLink'] || null;
+      }
     }
 
     if (req.query.debug === '1') {
-      return res.status(200).json({ folder, total: photos.length, pages: debugPages });
+      return res.status(200).json({ folder, total: photos.length, foldersRead, pages: debugPages });
     }
 
     res.status(200).json({ photos });
